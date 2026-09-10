@@ -1,0 +1,14 @@
+# Output directories
+dist/
+build/
+
+# Dependencies
+node_modules/
+
+# IDE / Editor
+.idea/
+.vscode/
+
+# Locks & Logs
+package-lock.json
+*.log
