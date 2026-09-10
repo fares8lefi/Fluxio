@@ -1,26 +1,344 @@
-import { ArrowRight, BarChart3, Check, FileText, Layers3, Menu, PackageCheck, ShieldCheck, UsersRound, X } from 'lucide-react'
-import { useState } from 'react'
-import { motion, useReducedMotion } from 'motion/react'
-import { Button } from '@/components/ui/button'
+import {
+  ArrowRight,
+  BarChart3,
+  Check,
+  FileText,
+  Layers3,
+  Menu,
+  PackageCheck,
+  ShieldCheck,
+  UsersRound,
+  X,
+} from 'lucide-react';
+import { useState } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
+import { Button } from '@/components/ui/button';
 
-const features = [[Layers3, 'Catalogue organisé', 'Produits, catégories et fournisseurs réunis dans un seul espace clair.'], [BarChart3, 'Stock fiable', 'Suivez chaque entrée, sortie et retour pour anticiper les ruptures.'], [UsersRound, 'Clients centralisés', 'Gardez un répertoire client simple et disponible pour votre équipe.'], [FileText, 'Facturation simplifiée', 'Préparez vos factures avec les informations déjà présentes dans Fluxio.']]
-const menu = [['Produit', 'produit'], ['Sécurité', 'securite'], ['MVP gratuit', 'mvp']]
+const features = [
+  [
+    Layers3,
+    'Catalogue organisé',
+    'Produits, catégories et fournisseurs réunis dans un seul espace clair.',
+  ],
+  [
+    BarChart3,
+    'Stock fiable',
+    'Suivez chaque entrée, sortie et retour pour anticiper les ruptures.',
+  ],
+  [
+    UsersRound,
+    'Clients centralisés',
+    'Gardez un répertoire client simple et disponible pour votre équipe.',
+  ],
+  [
+    FileText,
+    'Facturation simplifiée',
+    'Préparez vos factures avec les informations déjà présentes dans Fluxio.',
+  ],
+];
+const menu = [
+  ['Produit', 'produit'],
+  ['Sécurité', 'securite'],
+  ['MVP gratuit', 'mvp'],
+];
 
 function App() {
-  const [open, setOpen] = useState(false)
-  const reduceMotion = useReducedMotion()
-  return <div className="min-h-screen overflow-hidden bg-[#fcfcfd] text-slate-950 selection:bg-cyan-200">
-    <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[700px] overflow-hidden"><div className="absolute left-1/2 top-[-420px] size-[920px] -translate-x-1/2 rounded-full bg-cyan-200/55 blur-3xl" /><div className="absolute right-[8%] top-20 size-80 rounded-full bg-emerald-100/60 blur-3xl" /></div>
-    <header className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 lg:px-8"><a className="flex items-center gap-2.5 font-semibold" href="#accueil"><span className="grid size-8 place-items-center rounded-lg bg-slate-950 text-sm font-bold text-white">F</span>Fluxio</a><nav className="hidden gap-8 text-sm font-medium text-slate-600 md:flex">{menu.map(([label, id]) => <a href={`#${id}`} key={id}>{label}</a>)}</nav><div className="hidden gap-3 md:flex"><Button variant="ghost" asChild><a href="#connexion">Se connecter</a></Button><Button asChild><a href="#demarrer">Demander l’accès <ArrowRight /></a></Button></div><button className="grid size-10 place-items-center rounded-lg border bg-white md:hidden" type="button" onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button></header>
-    {open && <nav className="absolute inset-x-5 top-16 z-20 grid gap-1 rounded-xl border bg-white p-4 shadow-xl md:hidden">{menu.map(([label, id]) => <a className="rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-slate-50" href={`#${id}`} key={id} onClick={() => setOpen(false)}>{label}</a>)}<Button className="mt-2" asChild><a href="#demarrer">Demander l’accès <ArrowRight /></a></Button></nav>}
-    <motion.main id="accueil" initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.35 }}><section className="mx-auto max-w-7xl px-5 pb-20 pt-16 text-center sm:pt-24 lg:px-8 lg:pb-28"><motion.p initial={reduceMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }} className="mx-auto inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-cyan-800 shadow-sm"><PackageCheck className="size-3.5" /> MVP gratuit de gestion d’activité</motion.p><motion.h1 initial={reduceMotion ? false : { opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: reduceMotion ? 0 : 0.08 }} className="mx-auto mt-7 max-w-4xl text-5xl font-semibold leading-[1.03] tracking-[-.055em] sm:text-6xl lg:text-7xl">Gardez le contrôle de votre activité, <span className="text-cyan-700">sans complexité.</span></motion.h1><p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-600 sm:text-xl">Fluxio réunit inventaire, catalogue, clients et facturation pour aider les PME à travailler avec une information toujours fiable.</p><div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row"><Button size="lg" className="h-12 rounded-xl px-5" asChild><a href="#demarrer">Accéder au MVP gratuitement <ArrowRight /></a></Button><Button size="lg" variant="outline" className="h-12 rounded-xl bg-white px-5" asChild><a href="#produit">Découvrir le produit</a></Button></div><p className="mt-4 text-xs text-slate-500">Gratuit pendant la phase MVP · Sans carte bancaire</p><Dashboard /></section>
-      <section id="mvp" className="border-y bg-white/70"><div className="mx-auto flex max-w-6xl flex-col items-center gap-5 px-5 py-9 text-center sm:flex-row sm:justify-between sm:text-left"><div><p className="text-xs font-medium uppercase tracking-[.16em] text-slate-400">UNE VERSION CONSTRUITE AVEC VOUS</p><p className="mt-1 font-medium text-slate-700">Fluxio est gratuit pendant sa phase MVP.</p></div><p className="max-w-md text-sm leading-6 text-slate-500">Nous itérons avec les premiers utilisateurs. Un plan payant ne sera envisagé qu’après validation du produit.</p></div></section>
-      <section id="produit" className="mx-auto max-w-7xl px-5 py-24 lg:px-8 lg:py-32"><p className="text-sm font-semibold text-cyan-700">UNE VUE FIABLE DE VOTRE ACTIVITÉ</p><h2 className="mt-3 max-w-2xl text-4xl font-semibold tracking-[-.04em] sm:text-5xl">Les essentiels de votre entreprise, réunis.</h2><p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">Un outil simple pour transformer vos données de gestion en décisions rapides et sereines.</p><div className="mt-14 grid gap-5 md:grid-cols-2 xl:grid-cols-4">{features.map(([Icon, title, description]) => <article className="rounded-2xl border bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-lg" key={title}><span className="grid size-11 place-items-center rounded-xl bg-cyan-100 text-cyan-800"><Icon className="size-5" /></span><h3 className="mt-6 text-lg font-semibold">{title}</h3><p className="mt-2 leading-7 text-slate-600">{description}</p></article>)}</div></section>
-      <section id="securite" className="bg-slate-950 px-5 py-24 text-white lg:py-32"><div className="mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-2"><div><p className="text-sm font-semibold text-cyan-300">CONÇU POUR VOTRE ENTREPRISE</p><h2 className="mt-3 text-4xl font-semibold tracking-[-.04em] sm:text-5xl">Des données fiables, une entreprise protégée.</h2><p className="mt-6 text-lg leading-8 text-slate-300">Chaque entreprise dispose de son espace isolé. Les opérations de stock restent cohérentes, même lors de mouvements simultanés.</p><ul className="mt-8 grid gap-4 text-slate-200">{['Accès sécurisé par authentification et codes OTP', 'Données strictement séparées par entreprise', 'Mouvements de stock protégés par transactions'].map((text) => <li className="flex gap-3" key={text}><span className="grid size-5 shrink-0 place-items-center rounded-full bg-cyan-400 text-slate-950"><Check className="size-3.5 stroke-[3]" /></span>{text}</li>)}</ul></div><Metrics /></div></section>
-      <section className="mx-auto max-w-7xl px-5 py-24 lg:px-8"><motion.div whileHover={reduceMotion ? undefined : { scale: 1.01 }} className="rounded-3xl bg-cyan-100 px-6 py-14 text-center"><span className="mx-auto grid size-11 place-items-center rounded-xl bg-white text-cyan-800 shadow-sm"><ShieldCheck className="size-5" /></span><h2 className="mx-auto mt-6 max-w-2xl text-4xl font-semibold tracking-[-.04em] sm:text-5xl">Reprenez le contrôle, dès maintenant.</h2><p className="mx-auto mt-5 max-w-xl text-lg leading-8 text-slate-600">Accédez au MVP gratuitement et participez à la construction de l’outil dont votre équipe a besoin.</p><Button id="demarrer" size="lg" className="mt-8 h-12 rounded-xl bg-cyan-800 px-6 hover:bg-cyan-900" asChild><a href="mailto:bonjour@fluxio.app">Demander l’accès gratuit <ArrowRight /></a></Button></motion.div></section></motion.main>
-    <footer className="border-t px-5 py-8 text-center text-sm text-slate-500">© 2026 Fluxio. Conçu pour les PME.</footer>
-  </div>
+  const [open, setOpen] = useState(false);
+  const reduceMotion = useReducedMotion();
+  return (
+    <div className="min-h-screen overflow-hidden bg-[#fcfcfd] text-slate-950 selection:bg-cyan-200">
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[700px] overflow-hidden">
+        <div className="absolute top-[-420px] left-1/2 size-[920px] -translate-x-1/2 rounded-full bg-cyan-200/55 blur-3xl" />
+        <div className="absolute top-20 right-[8%] size-80 rounded-full bg-emerald-100/60 blur-3xl" />
+      </div>
+      <header className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 lg:px-8">
+        <a className="flex items-center gap-2.5 font-semibold" href="#accueil">
+          <span className="grid size-8 place-items-center rounded-lg bg-slate-950 text-sm font-bold text-white">
+            F
+          </span>
+          Fluxio
+        </a>
+        <nav className="hidden gap-8 text-sm font-medium text-slate-600 md:flex">
+          {menu.map(([label, id]) => (
+            <a href={`#${id}`} key={id}>
+              {label}
+            </a>
+          ))}
+        </nav>
+        <div className="hidden gap-3 md:flex">
+          <Button variant="ghost" asChild>
+            <a href="#connexion">Se connecter</a>
+          </Button>
+          <Button asChild>
+            <a href="#demarrer">
+              Demander l’accès <ArrowRight />
+            </a>
+          </Button>
+        </div>
+        <button
+          className="grid size-10 place-items-center rounded-lg border bg-white md:hidden"
+          type="button"
+          onClick={() => setOpen(!open)}
+        >
+          {open ? <X /> : <Menu />}
+        </button>
+      </header>
+      {open && (
+        <nav className="absolute inset-x-5 top-16 z-20 grid gap-1 rounded-xl border bg-white p-4 shadow-xl md:hidden">
+          {menu.map(([label, id]) => (
+            <a
+              className="rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-slate-50"
+              href={`#${id}`}
+              key={id}
+              onClick={() => setOpen(false)}
+            >
+              {label}
+            </a>
+          ))}
+          <Button className="mt-2" asChild>
+            <a href="#demarrer">
+              Demander l’accès <ArrowRight />
+            </a>
+          </Button>
+        </nav>
+      )}
+      <motion.main
+        id="accueil"
+        initial={reduceMotion ? false : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.35 }}
+      >
+        <section className="mx-auto max-w-7xl px-5 pt-16 pb-20 text-center sm:pt-24 lg:px-8 lg:pb-28">
+          <motion.p
+            initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45 }}
+            className="mx-auto inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-cyan-800 shadow-sm"
+          >
+            <PackageCheck className="size-3.5" /> MVP gratuit de gestion
+            d’activité
+          </motion.p>
+          <motion.h1
+            initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: reduceMotion ? 0 : 0.08 }}
+            className="mx-auto mt-7 max-w-4xl text-5xl leading-[1.03] font-semibold tracking-[-.055em] sm:text-6xl lg:text-7xl"
+          >
+            Gardez le contrôle de votre activité,{' '}
+            <span className="text-cyan-700">sans complexité.</span>
+          </motion.h1>
+          <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-600 sm:text-xl">
+            Fluxio réunit inventaire, catalogue, clients et facturation pour
+            aider les PME à travailler avec une information toujours fiable.
+          </p>
+          <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
+            <Button size="lg" className="h-12 rounded-xl px-5" asChild>
+              <a href="#demarrer">
+                Accéder au MVP gratuitement <ArrowRight />
+              </a>
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="h-12 rounded-xl bg-white px-5"
+              asChild
+            >
+              <a href="#produit">Découvrir le produit</a>
+            </Button>
+          </div>
+          <p className="mt-4 text-xs text-slate-500">
+            Gratuit pendant la phase MVP · Sans carte bancaire
+          </p>
+          <Dashboard />
+        </section>
+        <section id="mvp" className="border-y bg-white/70">
+          <div className="mx-auto flex max-w-6xl flex-col items-center gap-5 px-5 py-9 text-center sm:flex-row sm:justify-between sm:text-left">
+            <div>
+              <p className="text-xs font-medium tracking-[.16em] text-slate-400 uppercase">
+                UNE VERSION CONSTRUITE AVEC VOUS
+              </p>
+              <p className="mt-1 font-medium text-slate-700">
+                Fluxio est gratuit pendant sa phase MVP.
+              </p>
+            </div>
+            <p className="max-w-md text-sm leading-6 text-slate-500">
+              Nous itérons avec les premiers utilisateurs. Un plan payant ne
+              sera envisagé qu’après validation du produit.
+            </p>
+          </div>
+        </section>
+        <section
+          id="produit"
+          className="mx-auto max-w-7xl px-5 py-24 lg:px-8 lg:py-32"
+        >
+          <p className="text-sm font-semibold text-cyan-700">
+            UNE VUE FIABLE DE VOTRE ACTIVITÉ
+          </p>
+          <h2 className="mt-3 max-w-2xl text-4xl font-semibold tracking-[-.04em] sm:text-5xl">
+            Les essentiels de votre entreprise, réunis.
+          </h2>
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
+            Un outil simple pour transformer vos données de gestion en décisions
+            rapides et sereines.
+          </p>
+          <div className="mt-14 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            {features.map(([Icon, title, description]) => (
+              <article
+                className="rounded-2xl border bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                key={title}
+              >
+                <span className="grid size-11 place-items-center rounded-xl bg-cyan-100 text-cyan-800">
+                  <Icon className="size-5" />
+                </span>
+                <h3 className="mt-6 text-lg font-semibold">{title}</h3>
+                <p className="mt-2 leading-7 text-slate-600">{description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+        <section
+          id="securite"
+          className="bg-slate-950 px-5 py-24 text-white lg:py-32"
+        >
+          <div className="mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-2">
+            <div>
+              <p className="text-sm font-semibold text-cyan-300">
+                CONÇU POUR VOTRE ENTREPRISE
+              </p>
+              <h2 className="mt-3 text-4xl font-semibold tracking-[-.04em] sm:text-5xl">
+                Des données fiables, une entreprise protégée.
+              </h2>
+              <p className="mt-6 text-lg leading-8 text-slate-300">
+                Chaque entreprise dispose de son espace isolé. Les opérations de
+                stock restent cohérentes, même lors de mouvements simultanés.
+              </p>
+              <ul className="mt-8 grid gap-4 text-slate-200">
+                {[
+                  'Accès sécurisé par authentification et codes OTP',
+                  'Données strictement séparées par entreprise',
+                  'Mouvements de stock protégés par transactions',
+                ].map((text) => (
+                  <li className="flex gap-3" key={text}>
+                    <span className="grid size-5 shrink-0 place-items-center rounded-full bg-cyan-400 text-slate-950">
+                      <Check className="size-3.5 stroke-[3]" />
+                    </span>
+                    {text}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <Metrics />
+          </div>
+        </section>
+        <section className="mx-auto max-w-7xl px-5 py-24 lg:px-8">
+          <motion.div
+            whileHover={reduceMotion ? undefined : { scale: 1.01 }}
+            className="rounded-3xl bg-cyan-100 px-6 py-14 text-center"
+          >
+            <span className="mx-auto grid size-11 place-items-center rounded-xl bg-white text-cyan-800 shadow-sm">
+              <ShieldCheck className="size-5" />
+            </span>
+            <h2 className="mx-auto mt-6 max-w-2xl text-4xl font-semibold tracking-[-.04em] sm:text-5xl">
+              Reprenez le contrôle, dès maintenant.
+            </h2>
+            <p className="mx-auto mt-5 max-w-xl text-lg leading-8 text-slate-600">
+              Accédez au MVP gratuitement et participez à la construction de
+              l’outil dont votre équipe a besoin.
+            </p>
+            <Button
+              id="demarrer"
+              size="lg"
+              className="mt-8 h-12 rounded-xl bg-cyan-800 px-6 hover:bg-cyan-900"
+              asChild
+            >
+              <a href="mailto:bonjour@fluxio.app">
+                Demander l’accès gratuit <ArrowRight />
+              </a>
+            </Button>
+          </motion.div>
+        </section>
+      </motion.main>
+      <footer className="border-t px-5 py-8 text-center text-sm text-slate-500">
+        © 2026 Fluxio. Conçu pour les PME.
+      </footer>
+    </div>
+  );
 }
-function Metrics() { return <div className="rounded-2xl border border-white/10 bg-white/[.06] p-5 shadow-2xl shadow-cyan-950/50"><p className="text-sm text-slate-400">État du stock</p><p className="mt-1 text-lg font-semibold">Cette semaine</p><div className="mt-5 grid grid-cols-3 gap-3">{[['Articles', '1 284'], ['Alertes', '14'], ['À commander', '8']].map(([label, value]) => <div className="rounded-xl bg-white/[.07] p-3" key={label}><p className="text-xs text-slate-400">{label}</p><p className="mt-2 text-xl font-semibold">{value}</p></div>)}</div><div className="mt-5 flex h-28 items-end gap-2 rounded-xl bg-white/[.07] p-4">{[35, 48, 41, 62, 58, 76, 92, 72, 100, 88, 110, 104].map((height, index) => <span className="flex-1 rounded-t-sm bg-gradient-to-t from-cyan-600 to-emerald-300" style={{ height, opacity: .45 + index / 20 }} key={index} />)}</div></div> }
-function Dashboard() { return <div className="relative mx-auto mt-16 max-w-5xl text-left sm:mt-20"><div className="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-tr from-cyan-300/60 via-emerald-200/40 to-sky-100/60 blur-2xl" /><div className="overflow-hidden rounded-2xl border bg-white p-5 shadow-2xl shadow-slate-900/10"><p className="text-xs text-slate-400">Bonjour, Marianne</p><h3 className="mt-1 text-xl font-semibold">Votre stock est sous contrôle.</h3><div className="mt-6 grid gap-3 sm:grid-cols-3">{[['1 284', 'Articles suivis'], ['14', 'Alertes stock bas'], ['8', 'À commander']].map(([value, label]) => <div className="rounded-lg border p-3" key={label}><p className="text-[10px] text-slate-400">{label}</p><p className="mt-1 text-lg font-semibold">{value}</p></div>)}</div><div className="mt-5 rounded-lg border p-4"><p className="text-xs font-semibold">Articles à surveiller</p>{['T-shirts coton blanc', 'Bouteilles isothermes', 'Câbles USB-C'].map((item, index) => <div className="mt-4 flex items-center gap-3" key={item}><span className={`size-2 rounded-full ${['bg-amber-400', 'bg-rose-500', 'bg-cyan-500'][index]}`} /><p className="flex-1 text-xs font-medium">{item}</p><div className="h-1.5 w-16 rounded-full bg-slate-100"><div className="h-full rounded-full bg-slate-800" style={{ width: `${[36, 18, 52][index]}%` }} /></div></div>)}</div></div></div> }
-export default App
+function Metrics() {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[.06] p-5 shadow-2xl shadow-cyan-950/50">
+      <p className="text-sm text-slate-400">État du stock</p>
+      <p className="mt-1 text-lg font-semibold">Cette semaine</p>
+      <div className="mt-5 grid grid-cols-3 gap-3">
+        {[
+          ['Articles', '1 284'],
+          ['Alertes', '14'],
+          ['À commander', '8'],
+        ].map(([label, value]) => (
+          <div className="rounded-xl bg-white/[.07] p-3" key={label}>
+            <p className="text-xs text-slate-400">{label}</p>
+            <p className="mt-2 text-xl font-semibold">{value}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-5 flex h-28 items-end gap-2 rounded-xl bg-white/[.07] p-4">
+        {[35, 48, 41, 62, 58, 76, 92, 72, 100, 88, 110, 104].map(
+          (height, index) => (
+            <span
+              className="flex-1 rounded-t-sm bg-gradient-to-t from-cyan-600 to-emerald-300"
+              style={{ height, opacity: 0.45 + index / 20 }}
+              key={index}
+            />
+          )
+        )}
+      </div>
+    </div>
+  );
+}
+function Dashboard() {
+  return (
+    <div className="relative mx-auto mt-16 max-w-5xl text-left sm:mt-20">
+      <div className="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-tr from-cyan-300/60 via-emerald-200/40 to-sky-100/60 blur-2xl" />
+      <div className="overflow-hidden rounded-2xl border bg-white p-5 shadow-2xl shadow-slate-900/10">
+        <p className="text-xs text-slate-400">Bonjour, Marianne</p>
+        <h3 className="mt-1 text-xl font-semibold">
+          Votre stock est sous contrôle.
+        </h3>
+        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          {[
+            ['1 284', 'Articles suivis'],
+            ['14', 'Alertes stock bas'],
+            ['8', 'À commander'],
+          ].map(([value, label]) => (
+            <div className="rounded-lg border p-3" key={label}>
+              <p className="text-[10px] text-slate-400">{label}</p>
+              <p className="mt-1 text-lg font-semibold">{value}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-5 rounded-lg border p-4">
+          <p className="text-xs font-semibold">Articles à surveiller</p>
+          {[
+            'T-shirts coton blanc',
+            'Bouteilles isothermes',
+            'Câbles USB-C',
+          ].map((item, index) => (
+            <div className="mt-4 flex items-center gap-3" key={item}>
+              <span
+                className={`size-2 rounded-full ${['bg-amber-400', 'bg-rose-500', 'bg-cyan-500'][index]}`}
+              />
+              <p className="flex-1 text-xs font-medium">{item}</p>
+              <div className="h-1.5 w-16 rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full bg-slate-800"
+                  style={{ width: `${[36, 18, 52][index]}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+export default App;
