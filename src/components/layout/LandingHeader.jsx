@@ -24,7 +24,7 @@ export function LandingHeader() {
         </nav>
         <div className="hidden gap-3 md:flex">
           <Button variant="ghost" asChild>
-            <a href="#connexion">Se connecter</a>
+            <a href="#login">Se connecter</a>
           </Button>
           <Button asChild>
             <a href="#signup">
