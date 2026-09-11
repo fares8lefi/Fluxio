@@ -18,6 +18,13 @@ const INITIAL_DATA = {
   matriculeFiscale: '',
 };
 
+/**
+ * SignupPage Component
+ * Manages a multi-step registration flow:
+ * 1. Personal Information
+ * 2. Company Information
+ * 3. Email Verification (OTP)
+ */
 export default function SignupPage() {
   const [step, setStep] = useState(1);
   const [data, setData] = useState(INITIAL_DATA);
@@ -28,6 +35,7 @@ export default function SignupPage() {
   const handleChange = (event) =>
     setData((prev) => ({ ...prev, [event.target.name]: event.target.value }));
 
+  // Submits registration data to create a new account
   const handleRegister = async (event) => {
     event.preventDefault();
     if (!event.currentTarget.reportValidity()) return;
@@ -47,6 +55,7 @@ export default function SignupPage() {
     }
   };
 
+  // Verifies the account using the OTP code sent to email
   const handleVerify = async (event) => {
     event.preventDefault();
     setLoading(true);
@@ -55,8 +64,11 @@ export default function SignupPage() {
       await verifyAccount(data.email, code);
       setMessage({
         type: 'success',
-        text: 'Votre compte est vérifié. Vous pouvez désormais vous connecter.',
+        text: 'Votre compte est vérifié. Redirection vers la connexion...',
       });
+      setTimeout(() => {
+        window.location.hash = '#login';
+      }, 3000);
     } catch (error) {
       setMessage({
         type: 'error',
