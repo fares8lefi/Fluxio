@@ -18,7 +18,7 @@ export default function AppRouter() {
   }
 
   // Protected routes: redirect to login if not authenticated
-  if (route === '#dashboard') {
+  if (route.startsWith('#dashboard')) {
     return isAuthenticated ? <DashboardPage /> : <LoginPage />;
   }
 
