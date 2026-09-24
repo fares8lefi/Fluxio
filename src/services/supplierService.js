@@ -3,10 +3,29 @@ import { request } from './apiClient';
 const BASE = '/api/suppliers';
 
 // GET /api/suppliers/getAllSupplier
-export const getSuppliers = () => request(`${BASE}/getAllSupplier`);
+export const getSuppliers = async () => {
+  try {
+    return await request(`${BASE}/getAllSupplier`);
+  } catch (e) {
+    // Si la base ne contient aucun fournisseur, le backend renvoie 404 -> on traite comme liste vide
+    if (e.message?.includes('trouvé') || e.message?.includes('404') || e.message?.includes('introuvable')) {
+      return { success: true, suppliers: [] };
+    }
+    throw e;
+  }
+};
 
 // GET /api/suppliers/getActiveSuppliers
-export const getActiveSuppliers = () => request(`${BASE}/getActiveSuppliers`);
+export const getActiveSuppliers = async () => {
+  try {
+    return await request(`${BASE}/getActiveSuppliers`);
+  } catch (e) {
+    if (e.message?.includes('trouvé') || e.message?.includes('404') || e.message?.includes('introuvable')) {
+      return { success: true, suppliers: [] };
+    }
+    throw e;
+  }
+};
 
 // GET /api/suppliers/getSupplierById/:id
 export const getSupplierById = (id) => request(`${BASE}/getSupplierById/${id}`);

@@ -31,7 +31,7 @@ export const deleteProduct = (id)          => request(`${BASE}/deleteProduct/${i
  * GET /api/products/getProductById/:id
  */
 export const getProductById = (id) =>
-  request(`${BASE}/api/products/getProductById/${id}`);
+  request(`${BASE}/getProductById/${id}`);
 
 // ── Filtres & recherche ──────────────────────────────────────────────────────
 
@@ -42,7 +42,7 @@ export const getProductById = (id) =>
  * @param {{ name?, categoryId?, supplierId?, minPrice?, maxPrice?, tva_rate?, unit_of_measure? }} filters
  */
 export const getProductByFiltres = (filters = {}) =>
-  request(`${BASE}/api/products/getProductByFiltres${toQuery(filters)}`);
+  request(`${BASE}/getProductByFiltres${toQuery(filters)}`);
 
 /**
  * Récupère les produits associés à un fournisseur.
@@ -51,7 +51,7 @@ export const getProductByFiltres = (filters = {}) =>
  * @param {string} supplierId
  */
 export const getProductsBySupplier = (supplierId) =>
-  request(`${BASE}/api/products/getProductsBySupplier${toQuery({ supplierId })}`);
+  request(`${BASE}/getProductsBySupplier${toQuery({ supplierId })}`);
 
 /**
  * Récupère les produits associés à une catégorie.
@@ -60,7 +60,7 @@ export const getProductsBySupplier = (supplierId) =>
  * @param {string} categoryId
  */
 export const getProductsByCategories = (categoryId) =>
-  request(`${BASE}/api/products/getProductsByCategories${toQuery({ categoryId })}`);
+  request(`${BASE}/getProductsByCategories${toQuery({ categoryId })}`);
 
 // ── Agrégats & analytics ─────────────────────────────────────────────────────
 
@@ -69,25 +69,25 @@ export const getProductsByCategories = (categoryId) =>
  * GET /api/products/getSumProductByCategorie
  */
 export const getSumProductByCategorie = () =>
-  request(`${BASE}/api/products/getSumProductByCategorie`);
+  request(`${BASE}/getSumProductByCategorie`);
 
 /**
  * Retourne les produits dont le stock est en-dessous du seuil minimum.
  * GET /api/products/getProductsBelowStockMin
  */
 export const getProductsBelowStockMin = () =>
-  request(`${BASE}/api/products/getProductsBelowStockMin`);
+  request(`${BASE}/getProductsBelowStockMin`);
 
 /**
  * Retourne un résumé des alertes stock bas pour le dashboard.
  * GET /api/products/getLowStockDashboard
  */
 export const getLowStockDashboard = () =>
-  request(`${BASE}/api/products/getLowStockDashboard`);
+  request(`${BASE}/getLowStockDashboard`);
 
 /**
  * Retourne les produits en rupture totale de stock (stock_quantity === 0).
  * GET /api/products/getOutOfStockProducts
  */
 export const getOutOfStockProducts = () =>
-  request(`${BASE}/api/products/getOutOfStockProducts`);
+  request(`${BASE}/getOutOfStockProducts`);
