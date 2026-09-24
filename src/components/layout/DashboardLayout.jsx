@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Menu,
   X,
+  ArrowLeftRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -30,6 +31,7 @@ const NAV = [
       { id: 'categories', label: 'Catégories', icon: Tag },
     ],
   },
+  { id: 'movements',  label: 'Mouvements',    icon: ArrowLeftRight },
   { id: 'suppliers',  label: 'Fournisseurs',  icon: Truck },
   { id: 'clients',    label: 'Clients',       icon: Users },
   { id: 'invoices',   label: 'Factures',      icon: FileText },

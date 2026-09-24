@@ -4,6 +4,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { ProductsPage } from '@/features/products/ProductsPage';
 import { CategoriesPage } from '@/features/categories/CategoriesPage';
 import { SuppliersPage } from '@/features/suppliers/SuppliersPage';
+import { MovementsPage } from '@/features/movements/MovementsPage';
 import { Package, Users, TrendingUp, AlertCircle } from 'lucide-react';
 
 /** Extract sub-route from hash: '#dashboard/products' → 'products' */
@@ -84,6 +85,7 @@ function SubRouter({ sub, navigate }) {
   if (sub === 'products')   return <ProductsPage />;
   if (sub === 'categories') return <CategoriesPage />;
   if (sub === 'suppliers')  return <SuppliersPage />;
+  if (sub === 'movements')  return <MovementsPage />;
   return <HomePage />;
 }
 
