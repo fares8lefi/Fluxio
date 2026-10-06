@@ -4,8 +4,38 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { ProductsPage } from '@/features/products/ProductsPage';
 import { CategoriesPage } from '@/features/categories/CategoriesPage';
 import { SuppliersPage } from '@/features/suppliers/SuppliersPage';
-import { MovementsPage } from '@/features/movements/MovementsPage';
-import { Package, Users, TrendingUp, AlertCircle } from 'lucide-react';
+import {
+  MovementsPage,
+  MovementsInPage,
+  MovementsOutPage,
+  MovementsReturnSupPage,
+  MovementsReturnCliPage,
+} from '@/features/movements/MovementsPage';
+import { ClientsPage } from '@/features/clients/ClientsPage';
+import { ManagerDashboard } from '@/features/manager/ManagerDashboard';
+import { InvoicesPage } from '@/features/invoices/InvoicesPage';
+import { QuotesPage } from '@/features/invoices/QuotesPage';
+import { useState, useEffect, useCallback } from 'react';
+import {
+  Package,
+  Users,
+  TrendingUp,
+  AlertCircle,
+  ArrowDownLeft,
+  ArrowRight,
+  ShieldAlert,
+  ShoppingCart,
+  RefreshCw,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/Badge';
+import { StockEvolutionChart } from '@/components/charts/StockEvolutionChart';
+import { StockAlertsLineChart } from '@/components/charts/StockAlertsLineChart';
+import { StockHealthDonut } from '@/components/charts/StockHealthDonut';
+import { RecentMovements } from '@/components/dashboard/RecentMovements';
+import { getDashboardSummary, getStockHealth } from '@/services/dashboardService';
+import { getProducts } from '@/services/productService';
+import { getAllMouvment } from '@/services/mouvmentService';
 
 /** Extract sub-route from hash: '#dashboard/products' → 'products' */
 function useSubRoute() {
@@ -14,79 +44,305 @@ function useSubRoute() {
   return parts; // '' | 'products' | 'categories' | 'suppliers' | ...
 }
 
-function HomePage() {
+function HomePage({ navigate }) {
   const { user } = useAuth();
 
-  const stats = [
-    { label: 'Produits en stock',     value: '1 248', icon: Package,     trend: '+12%' },
-    { label: 'Clients actifs',        value: '342',   icon: Users,       trend: '+4%' },
-    { label: "Chiffre d'affaires",    value: '45 231 TND', icon: TrendingUp, trend: '+18%' },
-    { label: 'Ruptures de stock',     value: '3',     icon: AlertCircle, trend: '-2', alert: true },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState(null);
+  const [stockHealth, setStockHealth] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [movements, setMovements] = useState([]);
+  const [movementsError, setMovementsError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadData = useCallback(async () => {
+    try {
+      const [sumRes, healthRes, prodRes, movRes] = await Promise.allSettled([
+        getDashboardSummary(),
+        getStockHealth(),
+        getProducts({ limit: 100 }),
+        // Journal : les 5 derniers mouvements, déjà triés du plus récent au
+        // plus ancien par l'API (`orderBy: { created_at: 'desc' }`).
+        getAllMouvment({ page: 1, limit: 5 }),
+      ]);
+
+      if (sumRes.status === 'fulfilled') setSummary(sumRes.value?.data ?? null);
+      if (healthRes.status === 'fulfilled') setStockHealth(healthRes.value?.data ?? null);
+      if (prodRes.status === 'fulfilled') setProducts(prodRes.value?.products ?? []);
+
+      if (movRes.status === 'fulfilled') {
+        setMovements((movRes.value?.mouvments ?? []).slice(0, 5));
+        setMovementsError(null);
+      } else {
+        setMovementsError(movRes.reason?.message || 'Impossible de charger les derniers mouvements.');
+      }
+    } catch (err) {
+      console.error('Error loading dashboard data:', err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    loadData();
+  };
+
+  const totalProducts = stockHealth?.summary?.totalProducts ?? products.length;
+  const alertCount = stockHealth?.summary?.alertCount ?? 0;
+  const outOfStockCount = stockHealth?.summary?.outOfStockCount ?? 0;
+  const criticalProducts = stockHealth?.criticalProducts ?? [];
+  const totalRevenue = summary?.totalRevenue ?? 0;
+  const totalSales = summary?.totalSales ?? 0;
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Bonjour, {user?.username} 👋
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Voici un résumé de l'activité pour {user?.company_name}.
-        </p>
+    <div className="space-y-6">
+      {/* ── Top Welcome & Actions ── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Bonjour, {user?.username} 👋
+          </h1>
+          <p className="mt-0.5 text-sm text-slate-500">
+            Supervision en temps réel du stock, des alertes de réapprovisionnement et des flux pour{' '}
+            <strong className="text-slate-700">{user?.company_name}</strong>.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="rounded-xl text-xs h-9"
+          >
+            <RefreshCw className={`mr-1.5 size-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+            Actualiser
+          </Button>
+          <Button
+            onClick={() => navigate('movements/in')}
+            className="rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white text-xs h-9 shadow-xs"
+          >
+            <ArrowDownLeft className="mr-1.5 size-4" />
+            Réceptionner du stock
+          </Button>
+        </div>
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <div key={stat.label} className="rounded-xl border bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span
-                className={`grid size-10 place-items-center rounded-lg ${
-                  stat.alert ? 'bg-rose-100 text-rose-700' : 'bg-cyan-50 text-cyan-700'
-                }`}
-              >
-                <stat.icon className="size-5" />
-              </span>
-              <span
-                className={`text-sm font-medium ${
-                  stat.trend.startsWith('+')
-                    ? 'text-emerald-600'
-                    : stat.alert
-                      ? 'text-rose-600'
-                      : 'text-slate-500'
-                }`}
-              >
-                {stat.trend}
-              </span>
-            </div>
-            <p className="mt-4 text-2xl font-semibold tabular-nums">{stat.value}</p>
-            <p className="mt-1 text-sm text-slate-500">{stat.label}</p>
+      {/* ── KPI Cards ── */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Total Produits */}
+        <div className="rounded-xl border bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="grid size-10 place-items-center rounded-lg bg-cyan-50 text-cyan-700">
+              <Package className="size-5" />
+            </span>
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Catalogue</span>
           </div>
-        ))}
+          <p className="mt-3 text-2xl font-bold tabular-nums text-slate-900">{totalProducts}</p>
+          <p className="mt-0.5 text-xs text-slate-500">Références suivies</p>
+        </div>
+
+        {/* Alertes Seuil Minimum */}
+        <div className="rounded-xl border bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="grid size-10 place-items-center rounded-lg bg-amber-50 text-amber-700">
+              <ShieldAlert className="size-5" />
+            </span>
+            {alertCount > 0 ? (
+              <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800">
+                Action requise
+              </span>
+            ) : (
+              <span className="text-xs text-emerald-600 font-semibold">Stock sain</span>
+            )}
+          </div>
+          <p className="mt-3 text-2xl font-bold tabular-nums text-amber-600">{alertCount}</p>
+          <p className="mt-0.5 text-xs text-slate-500">Sous le seuil d'alerte (Min)</p>
+        </div>
+
+        {/* Ruptures de stock */}
+        <div className="rounded-xl border bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="grid size-10 place-items-center rounded-lg bg-rose-50 text-rose-700">
+              <AlertCircle className="size-5" />
+            </span>
+            {outOfStockCount > 0 ? (
+              <span className="inline-flex items-center rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-bold text-rose-800">
+                Critique
+              </span>
+            ) : (
+              <span className="text-xs text-emerald-600 font-semibold">Aucune rupture</span>
+            )}
+          </div>
+          <p className="mt-3 text-2xl font-bold tabular-nums text-rose-600">{outOfStockCount}</p>
+          <p className="mt-0.5 text-xs text-slate-500">Ruptures immédiates (0 stock)</p>
+        </div>
+
+        {/* Chiffre d'affaires facturé */}
+        <div className="rounded-xl border bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="grid size-10 place-items-center rounded-lg bg-indigo-50 text-indigo-700">
+              <TrendingUp className="size-5" />
+            </span>
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{totalSales} ventes</span>
+          </div>
+          <p className="mt-3 text-2xl font-bold tabular-nums text-slate-900">
+            {Number(totalRevenue).toFixed(3)} <span className="text-xs font-normal">TND</span>
+          </p>
+          <p className="mt-0.5 text-xs text-slate-500">Chiffre d'affaires facturé</p>
+        </div>
       </div>
 
-      <div className="mt-8 rounded-xl border bg-white shadow-sm">
-        <div className="border-b px-6 py-4">
-          <h2 className="font-semibold">Activité récente</h2>
+      {/* ── ROW 1: Courbe d'évolution temporelle + Jauge Donut ── */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <StockEvolutionChart products={products} />
         </div>
-        <div className="flex min-h-[260px] flex-col items-center justify-center p-6 text-center text-slate-500">
-          <span className="mb-4 grid size-12 place-items-center rounded-xl bg-slate-100 text-slate-400">
-            <Package className="size-6" />
-          </span>
-          <p className="font-medium text-slate-800">Tableau de bord en construction</p>
-          <p className="mt-1 text-sm">Les vraies données apparaîtront ici bientôt.</p>
+        <div className="lg:col-span-1">
+          <StockHealthDonut summary={stockHealth?.summary} />
         </div>
       </div>
+
+      {/* ── ROW 2: Courbes Stock Réel vs Seuil Min ── */}
+      <div>
+        <StockAlertsLineChart products={products} />
+      </div>
+
+      {/* ── ROW 3: Journal des 5 derniers mouvements ── */}
+      <RecentMovements
+        movements={movements}
+        isLoading={loading}
+        error={movementsError}
+        onSeeAll={() => navigate('movements')}
+      />
+
+      {/* ── ROW 4: Tableau des Produits Urgents à Commander ── */}
+      {criticalProducts.length > 0 && (
+        <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between border-b px-5 py-4 bg-slate-50/50">
+            <div className="flex items-center gap-2">
+              <span className="grid size-7 place-items-center rounded-lg bg-rose-100 text-rose-700">
+                <AlertCircle className="size-4" />
+              </span>
+              <div>
+                <h3 className="font-semibold text-slate-900 text-sm">
+                  Plan de réapprovisionnement urgent ({criticalProducts.length} articles)
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Articles ayant franchi le seuil d'alerte, classés par priorité.
+                </p>
+              </div>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('products')}
+              className="text-xs rounded-xl"
+            >
+              Voir tous les produits <ArrowRight className="ml-1 size-3.5" />
+            </Button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead className="border-b bg-slate-50/80 font-semibold uppercase tracking-wider text-slate-500">
+                <tr>
+                  <th className="px-5 py-3 text-left">Produit</th>
+                  <th className="px-5 py-3 text-right">Stock Réel</th>
+                  <th className="px-5 py-3 text-right">Seuil d'Alerte</th>
+                  <th className="px-5 py-3 text-right">Déficit (À commander)</th>
+                  <th className="px-5 py-3 text-center">Couverture</th>
+                  <th className="px-5 py-3 text-center">Statut</th>
+                  <th className="px-5 py-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y text-slate-700">
+                {criticalProducts.map((p) => {
+                  const isZero = p.stock_quantity <= 0;
+                  return (
+                    <tr key={p.id} className="hover:bg-slate-50/60 transition">
+                      <td className="px-5 py-3 font-medium text-slate-900">
+                        {p.name}
+                        {p.code && <span className="font-mono text-slate-400 ml-1.5 font-normal">({p.code})</span>}
+                      </td>
+                      <td className="px-5 py-3 text-right font-bold tabular-nums">
+                        <span className={isZero ? 'text-rose-600' : 'text-amber-600'}>
+                          {p.stock_quantity}
+                        </span>{' '}
+                        <span className="text-slate-400 font-normal">{p.unit_of_measure}</span>
+                      </td>
+                      <td className="px-5 py-3 text-right font-semibold tabular-nums text-slate-700">
+                        {p.stock_min} <span className="text-slate-400 font-normal">{p.unit_of_measure}</span>
+                      </td>
+                      <td className="px-5 py-3 text-right font-bold tabular-nums text-rose-600">
+                        +{p.deficit} {p.unit_of_measure}
+                      </td>
+                      <td className="px-5 py-3 text-center tabular-nums">
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="w-16 h-2 rounded-full bg-slate-100 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full ${
+                                isZero ? 'bg-rose-500' : 'bg-amber-500'
+                              }`}
+                              style={{ width: `${Math.min(100, p.alertCoveragePercent)}%` }}
+                            />
+                          </div>
+                          <span className="text-[11px] font-semibold text-slate-600">
+                            {p.alertCoveragePercent}%
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3 text-center">
+                        <Badge variant={isZero ? 'danger' : 'alert'}>
+                          {isZero ? 'Rupture' : 'Alerte'}
+                        </Badge>
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => navigate('movements/in')}
+                          className="inline-flex items-center gap-1 rounded-lg bg-cyan-50 px-2.5 py-1 font-semibold text-cyan-700 hover:bg-cyan-100 text-xs transition"
+                        >
+                          <ArrowDownLeft className="size-3" />
+                          Commander
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 /** Sub-router: renders the right page based on the hash sub-route */
 function SubRouter({ sub, navigate }) {
-  if (sub === 'products')   return <ProductsPage />;
-  if (sub === 'categories') return <CategoriesPage />;
-  if (sub === 'suppliers')  return <SuppliersPage />;
-  if (sub === 'movements')  return <MovementsPage />;
-  return <HomePage />;
+  if (sub === 'products')                  return <ProductsPage />;
+  if (sub === 'categories')                return <CategoriesPage />;
+  if (sub === 'suppliers')                 return <SuppliersPage />;
+  if (sub === 'movements')                                     return <MovementsPage />;
+  if (sub === 'movements/in' || sub === 'achats')              return <MovementsInPage />;
+  if (sub === 'movements/out' || sub === 'ventes')             return <MovementsOutPage />;
+  if (sub === 'movements/return-supplier')                     return <MovementsReturnSupPage />;
+  if (sub === 'movements/return-client')                       return <MovementsReturnCliPage />;
+  if (sub === 'clients')                   return <ClientsPage />;
+  if (sub === 'manager')                   return <ManagerDashboard />;
+  if (sub === 'invoices')              return <InvoicesPage />;
+  if (sub === 'invoices/quotes')       return <QuotesPage />;
+  if (sub === 'invoices/credit-notes') return <InvoicesPage initialType="CREDIT_NOTE" />;
+  return <HomePage navigate={navigate} />;
 }
 
 export default function DashboardPage() {
