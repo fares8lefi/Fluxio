@@ -1,16 +1,53 @@
-# React + Vite
+# Fluxio — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Interface web du MVP **Fluxio**, une solution de gestion d’inventaire, de catalogue produits, de clients et de facturation destinée aux petites et moyennes entreprises.
 
-Currently, two official plugins are available:
+Le produit est actuellement gratuit pendant la phase MVP. Cette phase sert à recueillir les retours des premiers utilisateurs et à valider les fonctionnalités avant d’envisager une offre payante.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Fonctionnalités couvertes
 
-## React Compiler
+- Gestion des produits, catégories et fournisseurs
+- Suivi des mouvements de stock : entrées, sorties et retours
+- Répertoire clients
+- Préparation de la facturation
+- Comptes entreprise isolés (architecture multi-tenant côté API)
+- Authentification sécurisée : connexion, JWT et vérification OTP
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Stack technique
 
-## Expanding the Oxlint configuration
+- React 19 et Vite
+- Tailwind CSS v4
+- shadcn/ui et Radix UI
+- Lucide Icons
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Démarrage
+
+Prérequis : Node.js 20 ou version ultérieure.
+
+```bash
+npm install
+npm run dev
+```
+
+L’application est alors disponible à l’adresse affichée par Vite, généralement `http://localhost:5173`.
+
+## Scripts
+
+| Commande          | Description                         |
+| ----------------- | ----------------------------------- |
+| `npm run dev`     | Lance le serveur de développement   |
+| `npm run build`   | Génère la version de production     |
+| `npm run preview` | Prévisualise le build de production |
+| `npm run lint`    | Analyse le code avec Oxlint         |
+
+## Backend
+
+L’API Fluxio est construite avec Node.js, Express, Prisma et MySQL. Elle gère l’authentification, l’isolation des données par entreprise, le catalogue, les clients et les mouvements de stock transactionnels.
+
+Avant de connecter ce frontend, configurez l’URL de l’API dans les variables d’environnement du projet selon les conventions retenues par l’équipe.
+
+## Principes d’interface
+
+- Chaque page s’appuie sur des composants réutilisables et des layouts responsives.
+- La palette utilise des tons bleu pétrole, cyan et émeraude ; le violet n’est pas utilisé.
+- Les informations critiques de stock doivent être lisibles, accessibles et visibles en priorité.
