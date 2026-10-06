@@ -71,7 +71,12 @@ export async function request(path, body, method = 'GET', isRetry = false) {
 
   if (!response.ok || !data.success) {
     const fallback = HTTP_MESSAGES[response.status] ?? 'Une erreur est survenue.';
-    throw new Error(data.message || data.error || fallback);
+    const error = new Error(data.message || data.error || fallback);
+    // Conserves le statut et la réponse complète (details, missing_fields, etc.)
+    // pour permettre aux formulaires d'afficher des erreurs par champ.
+    error.status = response.status;
+    error.payload = data;
+    throw error;
   }
 
   return data;
