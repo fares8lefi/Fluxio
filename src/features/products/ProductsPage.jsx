@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Package2, Plus, Pencil, Trash2, Filter, X, ChevronDown } from 'lucide-react';
+import { Package2, Plus, Pencil, Trash2, Filter, X, ChevronDown, TrendingDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ProductForm } from './ProductForm';
+import { StockEvolutionChart } from '@/components/charts/StockEvolutionChart';
+import { StockAlertsLineChart } from '@/components/charts/StockAlertsLineChart';
 import {
   getProducts,
   createProduct,
@@ -229,6 +231,17 @@ export function ProductsPage() {
               stock bas
             </button>
           )}
+          <button
+            onClick={() => setView('charts')}
+            className={`flex items-center gap-1.5 rounded-xl border px-4 py-2 text-sm font-medium transition ${
+              view === 'charts'
+                ? 'border-cyan-300 bg-cyan-50 text-cyan-800 shadow-sm'
+                : 'border-transparent text-slate-500 hover:bg-slate-100'
+            }`}
+          >
+            <TrendingDown className="size-4" />
+            Courbes & Alertes
+          </button>
         </div>
       )}
 
@@ -296,8 +309,13 @@ export function ProductsPage() {
         </div>
       )}
 
-      {/* ── Table ── */}
-      {loading ? (
+      {/* ── Content: Charts or Table ── */}
+      {view === 'charts' ? (
+        <div className="space-y-6">
+          <StockEvolutionChart products={products} />
+          <StockAlertsLineChart products={products} />
+        </div>
+      ) : loading ? (
         <div className="flex justify-center py-20">
           <div className="size-8 animate-spin rounded-full border-4 border-slate-200 border-t-cyan-700" />
         </div>
