@@ -15,6 +15,7 @@ import { ClientsPage } from '@/features/clients/ClientsPage';
 import { ManagerDashboard } from '@/features/manager/ManagerDashboard';
 import { InvoicesPage } from '@/features/invoices/InvoicesPage';
 import { QuotesPage } from '@/features/invoices/QuotesPage';
+import { SettingsPage } from '@/features/settings/SettingsPage';
 import { useState, useEffect, useCallback } from 'react';
 import {
   Package,
@@ -342,6 +343,7 @@ function SubRouter({ sub, navigate }) {
   if (sub === 'invoices')              return <InvoicesPage />;
   if (sub === 'invoices/quotes')       return <QuotesPage />;
   if (sub === 'invoices/credit-notes') return <InvoicesPage initialType="CREDIT_NOTE" />;
+  if (sub === 'settings')              return <SettingsPage />;
   return <HomePage navigate={navigate} />;
 }
 
