@@ -29,3 +29,21 @@ export const logout = () =>
 // Fetch current authenticated user's session data
 export const getMe = () =>
   request('/api/users/me', undefined, 'GET');
+
+// --- Password Reset & Profile Endpoints ---
+
+// Demander un code de réinitialisation de mot de passe
+export const forgotPassword = (email) =>
+  request('/api/users/forgetPassword', { email }, 'POST');
+
+// Vérifier le code et appliquer le nouveau mot de passe
+export const resetPassword = (email, code, newPassword) =>
+  request('/api/users/foorgetPasswordVerifyCode', { email, code, newPassword }, 'PUT');
+
+// Mettre à jour le profil personnel
+export const updatePersonnelData = (payload) =>
+  request('/api/users/updatePersonnelData', payload, 'PUT');
+
+// Changer le mot de passe actuel
+export const changePassword = (currentPassord, newPassword) =>
+  request('/api/users/changePassword', { currentPassord, newPassword }, 'PUT');
