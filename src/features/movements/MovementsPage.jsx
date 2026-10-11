@@ -7,17 +7,19 @@ import {
   Plus,
   Eye,
   Ban,
-  Calendar,
   Filter,
   X,
   TrendingUp,
-  Package,
+  PackageCheck,
+  Clock,
+  Receipt,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { MovementForm } from './MovementForm';
 import { MovementDetailModal } from './MovementDetailModal';
+import { GenerateInvoiceModal } from '@/features/invoices/GenerateInvoiceModal';
 import {
   getAllMouvment,
   createMouvment,
@@ -27,17 +29,19 @@ import { getProducts } from '@/services/productService';
 import { getSuppliers } from '@/services/supplierService';
 import { getClients } from '@/services/clientService';
 
+/* ─────────────────────────── configs ─────────────────────────── */
+
 const TYPE_CONFIG = {
   IN: {
-    label: 'Entrée',
-    fullLabel: 'Entrée (Réception)',
+    label: 'Entrée (Achat)',
+    fullLabel: 'Entrée (Achat / Réception)',
     variant: 'active',
     icon: ArrowDownLeft,
     badgeClass: 'bg-emerald-100 text-emerald-800',
   },
   OUT: {
-    label: 'Sortie',
-    fullLabel: 'Sortie (Expédition)',
+    label: 'Sortie (Vente)',
+    fullLabel: 'Sortie (Vente / Expédition)',
     variant: 'danger',
     icon: ArrowUpRight,
     badgeClass: 'bg-rose-100 text-rose-800',
@@ -59,35 +63,246 @@ const TYPE_CONFIG = {
 };
 
 const STATUS_CONFIG = {
-  CONFIRMED: { label: 'Confirmé', variant: 'active' },
-  PENDING: { label: 'En attente', variant: 'alert' },
-  CANCELLED: { label: 'Annulé', variant: 'danger' },
+  CONFIRMED: { label: 'Confirmé',   variant: 'active' },
+  PENDING:   { label: 'En attente', variant: 'alert'  },
+  CANCELLED: { label: 'Annulé',     variant: 'danger' },
 };
 
-export function MovementsPage() {
-  const [movements, setMovements] = useState([]);
-  const [count, setCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+/**
+ * Per-type hero / page config.
+ * Key is the typeFilter prop value (null for "all").
+ */
+const TYPE_PAGES = {
+  null: {
+    label: 'Mouvements de Stock',
+    description: 'Historique et traçabilité des entrées, sorties et retours de marchandises.',
+    Icon: ArrowLeftRight,
+    heroBg: 'from-slate-700 to-slate-900',
+    iconBg: 'bg-slate-600',
+    accentText: 'text-slate-200',
+    tabLabel: 'Tous',
+    hash: 'movements',
+  },
+  IN: {
+    label: 'Entrées de stock (Achats)',
+    description: 'Réceptions et approvisionnements fournisseur.',
+    Icon: ArrowDownLeft,
+    heroBg: 'from-emerald-600 to-emerald-800',
+    iconBg: 'bg-emerald-500',
+    accentText: 'text-emerald-100',
+    tabLabel: 'Entrées (Achats)',
+    hash: 'movements/in',
+  },
+  OUT: {
+    label: 'Sorties de stock (Ventes)',
+    description: 'Expéditions, ventes clients et consommations.',
+    Icon: ArrowUpRight,
+    heroBg: 'from-rose-600 to-rose-800',
+    iconBg: 'bg-rose-500',
+    accentText: 'text-rose-100',
+    tabLabel: 'Sorties (Ventes)',
+    hash: 'movements/out',
+  },
+  RETURN_SUPPLIER: {
+    label: 'Retours Fournisseur',
+    description: 'Marchandises renvoyées au fournisseur.',
+    Icon: RotateCcw,
+    heroBg: 'from-amber-500 to-amber-700',
+    iconBg: 'bg-amber-400',
+    accentText: 'text-amber-100',
+    tabLabel: 'Retour Fournisseur',
+    hash: 'movements/return-supplier',
+  },
+  RETURN_CLIENT: {
+    label: 'Retours Client',
+    description: 'Produits retournés réintégrés en stock.',
+    Icon: RotateCcw,
+    heroBg: 'from-cyan-600 to-cyan-800',
+    iconBg: 'bg-cyan-500',
+    accentText: 'text-cyan-100',
+    tabLabel: 'Retour Client',
+    hash: 'movements/return-client',
+  },
+};
 
-  // Ressources associées
-  const [products, setProducts] = useState([]);
-  const [suppliers, setSuppliers] = useState([]);
-  const [clients, setClients] = useState([]);
+/** Order of tabs */
+const TAB_KEYS = [null, 'IN', 'OUT', 'RETURN_SUPPLIER', 'RETURN_CLIENT'];
 
-  // Pagination & Filtres
-  const [page, setPage] = useState(1);
-  const [typeFilter, setTypeFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
+/* ─────────────────────── MovementTabs ─────────────────────────── */
+
+function MovementTabs({ currentType }) {
+  const navigate = (hash) => {
+    window.location.hash = `#dashboard/${hash}`;
+  };
+
+  return (
+    <div className="flex flex-wrap gap-1.5 rounded-xl border bg-white p-1.5 shadow-sm">
+      {TAB_KEYS.map((key) => {
+        const cfg = TYPE_PAGES[key];
+        const isActive = currentType === key;
+        return (
+          <button
+            key={String(key)}
+            type="button"
+            onClick={() => navigate(cfg.hash)}
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+              isActive
+                ? 'bg-cyan-700 text-white shadow-sm'
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+            }`}
+          >
+            <cfg.Icon className="size-3.5" />
+            {cfg.tabLabel}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ────────────────────── HeroBanner ────────────────────────────── */
+
+function HeroBanner({ typeCfg, onNew }) {
+  const { Icon } = typeCfg;
+  return (
+    <div
+      className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${typeCfg.heroBg} p-6 text-white shadow-md`}
+    >
+      {/* Decorative circle */}
+      <div className="pointer-events-none absolute -right-8 -top-8 size-40 rounded-full bg-white/5" />
+      <div className="pointer-events-none absolute -bottom-10 -right-4 size-28 rounded-full bg-white/5" />
+
+      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <span
+            className={`inline-grid size-12 shrink-0 place-items-center rounded-xl ${typeCfg.iconBg} shadow`}
+          >
+            <Icon className="size-6" />
+          </span>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight">{typeCfg.label}</h1>
+            <p className={`mt-0.5 text-sm ${typeCfg.accentText}`}>
+              {typeCfg.description}
+            </p>
+          </div>
+        </div>
+        <Button
+          onClick={onNew}
+          className="shrink-0 rounded-xl bg-white/20 text-white backdrop-blur hover:bg-white/30"
+        >
+          <Plus className="mr-2 size-4" />
+          Nouveau mouvement
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────── StatsCards ───────────────────────────── */
+
+function StatsCards({ movements, count, typeFilter }) {
+  const stats = useMemo(() => {
+    let typeCount = 0;
+    let totalAmount = 0;
+    let pendingCount = 0;
+
+    movements.forEach((m) => {
+      if (typeFilter === null || m.type === typeFilter) {
+        if (m.status !== 'CANCELLED') typeCount += 1;
+        if (m.status === 'PENDING') pendingCount += 1;
+        if (m.status !== 'CANCELLED') totalAmount += m.total_amount ?? 0;
+      }
+    });
+
+    return { typeCount, totalAmount, pendingCount };
+  }, [movements, typeFilter]);
+
+  const isFiltered = typeFilter !== null;
+
+  return (
+    <div className="grid gap-4 sm:grid-cols-3">
+      {/* Card 1 — total */}
+      <div className="rounded-xl border bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <span className="grid size-10 place-items-center rounded-lg bg-cyan-50 text-cyan-700">
+            <ArrowLeftRight className="size-5" />
+          </span>
+          <span className="text-xs text-slate-400">
+            {isFiltered ? TYPE_PAGES[typeFilter]?.tabLabel : 'Total'}
+          </span>
+        </div>
+        <p className="mt-3 text-2xl font-bold tabular-nums text-slate-900">{count}</p>
+        <p className="mt-0.5 text-xs text-slate-500">
+          {isFiltered
+            ? `${TYPE_PAGES[typeFilter]?.label} enregistrées`
+            : 'Mouvements enregistrés'}
+        </p>
+      </div>
+
+      {/* Card 2 — montant */}
+      <div className="rounded-xl border bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <span className="grid size-10 place-items-center rounded-lg bg-indigo-50 text-indigo-700">
+            <TrendingUp className="size-5" />
+          </span>
+          <span className="text-xs text-slate-400">Valeur flux</span>
+        </div>
+        <p className="mt-3 text-2xl font-bold tabular-nums text-slate-900">
+          {stats.totalAmount.toFixed(3)}{' '}
+          <span className="text-xs font-normal">TND</span>
+        </p>
+        <p className="mt-0.5 text-xs text-slate-500">Montant sur la page</p>
+      </div>
+
+      {/* Card 3 — en attente */}
+      <div className="rounded-xl border bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <span className="grid size-10 place-items-center rounded-lg bg-amber-50 text-amber-700">
+            <Clock className="size-5" />
+          </span>
+          <span className="text-xs font-semibold text-amber-600">En attente</span>
+        </div>
+        <p className="mt-3 text-2xl font-bold tabular-nums text-slate-900">
+          {stats.pendingCount}
+        </p>
+        <p className="mt-0.5 text-xs text-slate-500">À traiter</p>
+      </div>
+    </div>
+  );
+}
+
+/* ──────────────────── MovementTypeView ────────────────────────── */
+
+/**
+ * Core view component.
+ * @param {string|null} typeFilter  — null = all, 'IN' | 'OUT' | 'RETURN_SUPPLIER' | 'RETURN_CLIENT'
+ */
+function MovementTypeView({ typeFilter }) {
+  const typeCfg = TYPE_PAGES[typeFilter] ?? TYPE_PAGES[null];
+
+  const [movements, setMovements]         = useState([]);
+  const [count, setCount]                 = useState(0);
+  const [loading, setLoading]             = useState(true);
+  const [error, setError]                 = useState(null);
+
+  // Reference data
+  const [products, setProducts]           = useState([]);
+  const [suppliers, setSuppliers]         = useState([]);
+  const [clients, setClients]             = useState([]);
+
+  // Pagination & filters
+  const [page, setPage]                   = useState(1);
+  const [statusFilter, setStatusFilter]   = useState('');
+  const [startDate, setStartDate]         = useState('');
+  const [endDate, setEndDate]             = useState('');
+  const [showFilters, setShowFilters]     = useState(false);
 
   // Modals
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedMovement, setSelectedMovement] = useState(null);
+  const [invoiceMovementId, setInvoiceMovementId] = useState(null);
 
-  // Charger les données de référence (produits, fournisseurs, clients)
+  /* ── Reference data ── */
   const loadReferences = useCallback(async () => {
     try {
       const [pd, sd, cd] = await Promise.allSettled([
@@ -99,21 +314,21 @@ export function MovementsPage() {
       if (sd.status === 'fulfilled') setSuppliers(sd.value?.suppliers ?? []);
       if (cd.status === 'fulfilled') setClients(cd.value?.clients ?? []);
     } catch {
-      // non-bloquant
+      // non-blocking
     }
   }, []);
 
-  // Charger les mouvements
+  /* ── Movements ── */
   const loadMovements = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const filters = {
         page,
-        ...(typeFilter ? { type: typeFilter } : {}),
+        ...(typeFilter   ? { type: typeFilter }   : {}),
         ...(statusFilter ? { status: statusFilter } : {}),
-        ...(startDate ? { startDate } : {}),
-        ...(endDate ? { endDate } : {}),
+        ...(startDate    ? { startDate }           : {}),
+        ...(endDate      ? { endDate }             : {}),
       };
       const data = await getAllMouvment(filters);
       setMovements(data.mouvments ?? []);
@@ -125,19 +340,18 @@ export function MovementsPage() {
     }
   }, [page, typeFilter, statusFilter, startDate, endDate]);
 
-  useEffect(() => {
-    loadReferences();
-  }, [loadReferences]);
+  useEffect(() => { loadReferences(); }, [loadReferences]);
+  useEffect(() => { loadMovements();  }, [loadMovements]);
 
-  useEffect(() => {
-    loadMovements();
-  }, [loadMovements]);
+  // Reset page when typeFilter changes (parent mounts a new component instance anyway,
+  // but keep this for safety if ever reused inline)
+  useEffect(() => { setPage(1); }, [typeFilter]);
 
-  // Actions
+  /* ── Actions ── */
   const handleCreate = async (payload) => {
     await createMouvment(payload);
     loadMovements();
-    loadReferences(); // met à jour les stocks dans la liste locale des produits
+    loadReferences();
   };
 
   const handleCancelMovement = async (mvt) => {
@@ -145,9 +359,7 @@ export function MovementsPage() {
       !window.confirm(
         `Annuler le mouvement "${mvt.reference || mvt.id}" ?\nLes quantités des articles seront automatiquement réajustées en stock.`
       )
-    ) {
-      return;
-    }
+    ) return;
 
     try {
       await cancelMouvment(mvt.id);
@@ -160,118 +372,54 @@ export function MovementsPage() {
   };
 
   const resetFilters = () => {
-    setTypeFilter('');
     setStatusFilter('');
     setStartDate('');
     setEndDate('');
     setPage(1);
   };
 
-  const hasActiveFilters = Boolean(typeFilter || statusFilter || startDate || endDate);
+  const hasActiveFilters = Boolean(statusFilter || startDate || endDate);
 
-  // Statistiques calculées
-  const stats = useMemo(() => {
-    let inCount = 0;
-    let outCount = 0;
-    let totalVol = 0;
-
-    movements.forEach((m) => {
-      if (m.status !== 'CANCELLED') {
-        if (m.type === 'IN' || m.type === 'RETURN_CLIENT') inCount += 1;
-        if (m.type === 'OUT' || m.type === 'RETURN_SUPPLIER') outCount += 1;
-        totalVol += m.total_amount ?? 0;
-      }
-    });
-
-    return { inCount, outCount, totalVol };
-  }, [movements]);
+  /* ── On type-specific pages the Type column is hidden ── */
+  const showTypeCol = typeFilter === null;
 
   const limitPerPage = 10;
-  const totalPages = Math.ceil(count / limitPerPage) || 1;
+  const totalPages   = Math.ceil(count / limitPerPage) || 1;
 
+  /* ─────────────────────── render ─────────────────────── */
   return (
     <div className="space-y-6">
-      {/* ── En-tête ── */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Mouvements de Stock</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Historique et traçabilité des entrées, sorties et retours de marchandises.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            className="rounded-xl"
-            onClick={() => setShowFilters((s) => !s)}
-          >
-            <Filter className="mr-2 size-4" />
-            Filtres
-            {hasActiveFilters && (
-              <span className="ml-2 grid size-4 place-items-center rounded-full bg-cyan-600 text-[10px] font-bold text-white">
-                !
-              </span>
-            )}
-          </Button>
-          <Button
-            className="rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white"
-            onClick={() => setCreateModalOpen(true)}
-          >
-            <Plus className="mr-2 size-4" /> Nouveau mouvement
-          </Button>
-        </div>
+
+      {/* Hero banner */}
+      <HeroBanner typeCfg={typeCfg} onNew={() => setCreateModalOpen(true)} />
+
+      {/* Sub-tab navigation */}
+      <MovementTabs currentType={typeFilter} />
+
+      {/* Stats */}
+      <StatsCards movements={movements} count={count} typeFilter={typeFilter} />
+
+      {/* Filter bar toggle */}
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-slate-400">
+          {count} mouvement{count !== 1 ? 's' : ''} au total
+        </p>
+        <Button
+          variant="outline"
+          className="rounded-xl"
+          onClick={() => setShowFilters((s) => !s)}
+        >
+          <Filter className="mr-2 size-4" />
+          Filtres
+          {hasActiveFilters && (
+            <span className="ml-2 grid size-4 place-items-center rounded-full bg-cyan-600 text-[10px] font-bold text-white">
+              !
+            </span>
+          )}
+        </Button>
       </div>
 
-      {/* ── Cartes de statistiques ── */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl border bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="grid size-10 place-items-center rounded-lg bg-cyan-50 text-cyan-700">
-              <ArrowLeftRight className="size-5" />
-            </span>
-            <span className="text-xs text-slate-400">Total</span>
-          </div>
-          <p className="mt-3 text-2xl font-bold tabular-nums text-slate-900">{count}</p>
-          <p className="text-xs text-slate-500 mt-0.5">Mouvements enregistrés</p>
-        </div>
-
-        <div className="rounded-xl border bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="grid size-10 place-items-center rounded-lg bg-emerald-50 text-emerald-700">
-              <ArrowDownLeft className="size-5" />
-            </span>
-            <span className="text-xs font-semibold text-emerald-600">+ Entrées</span>
-          </div>
-          <p className="mt-3 text-2xl font-bold tabular-nums text-slate-900">{stats.inCount}</p>
-          <p className="text-xs text-slate-500 mt-0.5">Réceptions & retours clients</p>
-        </div>
-
-        <div className="rounded-xl border bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="grid size-10 place-items-center rounded-lg bg-rose-50 text-rose-700">
-              <ArrowUpRight className="size-5" />
-            </span>
-            <span className="text-xs font-semibold text-rose-600">- Sorties</span>
-          </div>
-          <p className="mt-3 text-2xl font-bold tabular-nums text-slate-900">{stats.outCount}</p>
-          <p className="text-xs text-slate-500 mt-0.5">Expéditions & sorties</p>
-        </div>
-
-        <div className="rounded-xl border bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="grid size-10 place-items-center rounded-lg bg-indigo-50 text-indigo-700">
-              <TrendingUp className="size-5" />
-            </span>
-            <span className="text-xs text-slate-400">Valeur flux</span>
-          </div>
-          <p className="mt-3 text-2xl font-bold tabular-nums text-slate-900">
-            {stats.totalVol.toFixed(3)} <span className="text-xs font-normal">TND</span>
-          </p>
-          <p className="text-xs text-slate-500 mt-0.5">Montant sur la page</p>
-        </div>
-      </div>
-
-      {/* ── Barre de filtres rétractable ── */}
+      {/* Filter panel */}
       {showFilters && (
         <div className="rounded-xl border bg-white p-4 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
@@ -288,33 +436,15 @@ export function MovementsPage() {
               </button>
             )}
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <div>
-              <label className="mb-1 block text-[11px] font-medium text-slate-600">Type</label>
-              <select
-                value={typeFilter}
-                onChange={(e) => {
-                  setTypeFilter(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full rounded-lg border px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500"
-              >
-                <option value="">Tous les types</option>
-                <option value="IN">Entrée (Réception)</option>
-                <option value="OUT">Sortie (Expédition)</option>
-                <option value="RETURN_SUPPLIER">Retour Fournisseur</option>
-                <option value="RETURN_CLIENT">Retour Client</option>
-              </select>
-            </div>
 
+          <div className="grid gap-3 sm:grid-cols-3">
             <div>
-              <label className="mb-1 block text-[11px] font-medium text-slate-600">Statut</label>
+              <label className="mb-1 block text-[11px] font-medium text-slate-600">
+                Statut
+              </label>
               <select
                 value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  setPage(1);
-                }}
+                onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
                 className="w-full rounded-lg border px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500"
               >
                 <option value="">Tous les statuts</option>
@@ -325,27 +455,25 @@ export function MovementsPage() {
             </div>
 
             <div>
-              <label className="mb-1 block text-[11px] font-medium text-slate-600">Date début</label>
+              <label className="mb-1 block text-[11px] font-medium text-slate-600">
+                Date début
+              </label>
               <input
                 type="date"
                 value={startDate}
-                onChange={(e) => {
-                  setStartDate(e.target.value);
-                  setPage(1);
-                }}
+                onChange={(e) => { setStartDate(e.target.value); setPage(1); }}
                 className="w-full rounded-lg border px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500"
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-[11px] font-medium text-slate-600">Date fin</label>
+              <label className="mb-1 block text-[11px] font-medium text-slate-600">
+                Date fin
+              </label>
               <input
                 type="date"
                 value={endDate}
-                onChange={(e) => {
-                  setEndDate(e.target.value);
-                  setPage(1);
-                }}
+                onChange={(e) => { setEndDate(e.target.value); setPage(1); }}
                 className="w-full rounded-lg border px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500"
               />
             </div>
@@ -353,22 +481,22 @@ export function MovementsPage() {
         </div>
       )}
 
-      {/* ── Message d'erreur ── */}
+      {/* Error */}
       {error && (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
           {error}
         </div>
       )}
 
-      {/* ── Tableau des mouvements ── */}
+      {/* Table */}
       {loading ? (
         <div className="flex justify-center py-20">
           <div className="size-8 animate-spin rounded-full border-4 border-slate-200 border-t-cyan-700" />
         </div>
       ) : movements.length === 0 ? (
         <EmptyState
-          Icon={ArrowLeftRight}
-          title={hasActiveFilters ? 'Aucun mouvement trouvé' : 'Aucun mouvement pour le moment'}
+          Icon={typeCfg.Icon}
+          title={hasActiveFilters ? 'Aucun mouvement trouvé' : `Aucun mouvement${typeFilter ? ` de type "${typeCfg.label}"` : ''} pour le moment`}
           description={
             hasActiveFilters
               ? 'Aucun mouvement ne correspond aux filtres appliqués.'
@@ -385,7 +513,7 @@ export function MovementsPage() {
                 <tr>
                   <th className="px-5 py-3 text-left">Date</th>
                   <th className="px-5 py-3 text-left">Réf.</th>
-                  <th className="px-5 py-3 text-left">Type</th>
+                  {showTypeCol && <th className="px-5 py-3 text-left">Type</th>}
                   <th className="px-5 py-3 text-left">Tiers / Partenaire</th>
                   <th className="px-5 py-3 text-left">Articles</th>
                   <th className="px-5 py-3 text-right">Montant Total</th>
@@ -399,6 +527,7 @@ export function MovementsPage() {
                     label: m.type,
                     variant: 'info',
                     icon: ArrowLeftRight,
+                    badgeClass: 'bg-slate-100 text-slate-700',
                   };
                   const statusMeta = STATUS_CONFIG[m.status] || {
                     label: m.status,
@@ -442,22 +571,24 @@ export function MovementsPage() {
                         )}
                       </td>
 
-                      {/* Type avec icône */}
-                      <td className="px-5 py-3 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${typeMeta.badgeClass}`}
-                        >
-                          <TypeIcon className="size-3" />
-                          {typeMeta.label}
-                        </span>
-                      </td>
+                      {/* Type (hidden on type-specific views) */}
+                      {showTypeCol && (
+                        <td className="px-5 py-3 whitespace-nowrap">
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${typeMeta.badgeClass}`}
+                          >
+                            <TypeIcon className="size-3" />
+                            {typeMeta.label}
+                          </span>
+                        </td>
+                      )}
 
                       {/* Partenaire */}
                       <td className="px-5 py-3 whitespace-nowrap text-slate-800 font-medium">
                         {partnerName}
                       </td>
 
-                      {/* Résumé articles */}
+                      {/* Articles */}
                       <td className="px-5 py-3 max-w-[200px] truncate text-slate-600">
                         <span className="font-semibold text-slate-800">{totalItemsCount}</span>{' '}
                         article{totalItemsCount > 1 ? 's' : ''}
@@ -468,7 +599,7 @@ export function MovementsPage() {
                         )}
                       </td>
 
-                      {/* Montant total */}
+                      {/* Montant */}
                       <td className="px-5 py-3 text-right font-bold tabular-nums text-slate-900 whitespace-nowrap">
                         {Number(m.total_amount ?? 0).toFixed(3)} TND
                       </td>
@@ -489,6 +620,16 @@ export function MovementsPage() {
                           >
                             <Eye className="size-4" />
                           </button>
+                          {m.type === 'OUT' && !isCancelled && (
+                            <button
+                              type="button"
+                              title="Générer une facture"
+                              onClick={() => setInvoiceMovementId(m.id)}
+                              className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-cyan-50 hover:text-cyan-700"
+                            >
+                              <Receipt className="size-4" />
+                            </button>
+                          )}
                           {!isCancelled && (
                             <button
                               type="button"
@@ -508,7 +649,7 @@ export function MovementsPage() {
             </table>
           </div>
 
-          {/* ── Footer Pagination ── */}
+          {/* Pagination footer */}
           <div className="flex items-center justify-between border-t px-5 py-3 text-xs text-slate-500">
             <span>
               {count} mouvement{count !== 1 ? 's' : ''} au total
@@ -540,9 +681,23 @@ export function MovementsPage() {
         </div>
       )}
 
-      {/* ── Modal de création ── */}
+      {/* Floating action button (type-specific pages) */}
+      {typeFilter !== null && (
+        <button
+          type="button"
+          onClick={() => setCreateModalOpen(true)}
+          className={`fixed bottom-8 right-8 flex items-center gap-2 rounded-2xl bg-gradient-to-br ${typeCfg.heroBg} px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:opacity-90 active:scale-95 z-30`}
+        >
+          <Plus className="size-5" />
+          Nouveau
+        </button>
+      )}
+
+      {/* Creation modal */}
       <MovementForm
         open={createModalOpen}
+        defaultType={typeFilter || 'OUT'}
+        fixedType={typeFilter}
         onClose={() => setCreateModalOpen(false)}
         onSubmit={handleCreate}
         products={products}
@@ -550,13 +705,33 @@ export function MovementsPage() {
         clients={clients}
       />
 
-      {/* ── Modal de détails ── */}
+      {/* Detail modal */}
       <MovementDetailModal
         movement={selectedMovement}
         open={Boolean(selectedMovement)}
         onClose={() => setSelectedMovement(null)}
         onCancelMovement={handleCancelMovement}
       />
+
+      {/* Invoice generation modal for OUT movements */}
+      <GenerateInvoiceModal
+        open={Boolean(invoiceMovementId)}
+        initialMovementId={invoiceMovementId || ''}
+        clients={clients}
+        onClose={() => setInvoiceMovementId(null)}
+        onSuccess={() => {
+          setInvoiceMovementId(null);
+          window.location.hash = '#dashboard/invoices';
+        }}
+      />
     </div>
   );
 }
+
+/* ────────────────── Named page exports ────────────────────────── */
+
+export function MovementsPage()          { return <MovementTypeView typeFilter={null} />; }
+export function MovementsInPage()        { return <MovementTypeView typeFilter="IN" />; }
+export function MovementsOutPage()       { return <MovementTypeView typeFilter="OUT" />; }
+export function MovementsReturnSupPage() { return <MovementTypeView typeFilter="RETURN_SUPPLIER" />; }
+export function MovementsReturnCliPage() { return <MovementTypeView typeFilter="RETURN_CLIENT" />; }
