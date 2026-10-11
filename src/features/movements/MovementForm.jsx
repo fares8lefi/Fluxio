@@ -14,20 +14,20 @@ import {
 const MOVEMENT_TYPES = [
   {
     id: 'IN',
-    label: 'Entrée (Réception)',
+    label: 'Entrée (Achat)',
     effect: '+ Stock',
     icon: ArrowDownLeft,
     color: 'emerald',
-    desc: 'Approvisionnement fournisseur ou ajout initial',
+    desc: 'Approvisionnement fournisseur ou achat initial',
     partnerType: 'supplier',
   },
   {
     id: 'OUT',
-    label: 'Sortie (Expédition)',
+    label: 'Sortie (Vente)',
     effect: '- Stock',
     icon: ArrowUpRight,
     color: 'rose',
-    desc: 'Vente, expédition client ou consommation',
+    desc: 'Vente client, expédition ou consommation',
     partnerType: 'client',
   },
   {
@@ -36,7 +36,7 @@ const MOVEMENT_TYPES = [
     effect: '- Stock',
     icon: RotateCcw,
     color: 'amber',
-    desc: 'Marchandise défectueuse renvoyée',
+    desc: 'Marchandise défectueuse renvoyée au fournisseur',
     partnerType: 'supplier',
   },
   {
@@ -50,8 +50,18 @@ const MOVEMENT_TYPES = [
   },
 ];
 
-export function MovementForm({ open, onClose, onSubmit, products = [], suppliers = [], clients = [] }) {
-  const [type, setType] = useState('IN');
+export function MovementForm({
+  open,
+  onClose,
+  onSubmit,
+  products = [],
+  suppliers = [],
+  clients = [],
+  defaultType = 'OUT',
+  fixedType = null,
+}) {
+  const resolvedType = fixedType || defaultType || 'OUT';
+  const [type, setType] = useState(resolvedType);
   const [reference, setReference] = useState('');
   const [note, setNote] = useState('');
   const [supplierId, setSupplierId] = useState('');
@@ -65,10 +75,11 @@ export function MovementForm({ open, onClose, onSubmit, products = [], suppliers
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Réinitialiser le formulaire à l'ouverture
+  // Réinitialiser le formulaire à l'ouverture avec le type par défaut associé à la page active
   useEffect(() => {
     if (open) {
-      setType('IN');
+      const initialType = fixedType || defaultType || 'OUT';
+      setType(initialType);
       setReference('');
       setNote('');
       setSupplierId('');
@@ -78,7 +89,7 @@ export function MovementForm({ open, onClose, onSubmit, products = [], suppliers
       setError(null);
       setSubmitting(false);
     }
-  }, [open]);
+  }, [open, fixedType, defaultType]);
 
   const currentTypeConfig = MOVEMENT_TYPES.find((t) => t.id === type) || MOVEMENT_TYPES[0];
 
@@ -193,7 +204,15 @@ export function MovementForm({ open, onClose, onSubmit, products = [], suppliers
   return (
     <Modal
       open={open}
-      title="Nouveau mouvement de stock"
+      title={
+        type === 'OUT'
+          ? 'Nouvelle Vente (Sortie de stock)'
+          : type === 'IN'
+          ? 'Nouvel Achat (Entrée de stock)'
+          : type === 'RETURN_SUPPLIER'
+          ? 'Nouveau Retour Fournisseur'
+          : 'Nouveau Retour Client'
+      }
       onClose={onClose}
       footer={
         <div className="flex w-full items-center justify-between">
@@ -213,7 +232,13 @@ export function MovementForm({ open, onClose, onSubmit, products = [], suppliers
               disabled={submitting || stockErrors.length > 0}
               className="bg-cyan-700 hover:bg-cyan-800 text-white"
             >
-              {submitting ? 'Enregistrement…' : 'Créer le mouvement'}
+              {submitting
+                ? 'Enregistrement…'
+                : type === 'OUT'
+                ? 'Enregistrer la vente'
+                : type === 'IN'
+                ? "Enregistrer l'achat"
+                : 'Créer le mouvement'}
             </Button>
           </div>
         </div>
@@ -227,51 +252,73 @@ export function MovementForm({ open, onClose, onSubmit, products = [], suppliers
           </div>
         )}
 
-        {/* 1. Sélection du type de mouvement */}
-        <div>
-          <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Type de mouvement *
-          </label>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {MOVEMENT_TYPES.map((t) => {
-              const Icon = t.icon;
-              const isSelected = type === t.id;
-              return (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setType(t.id)}
-                  className={`flex flex-col items-start rounded-xl border p-2.5 text-left transition ${
-                    isSelected
-                      ? 'border-cyan-600 bg-cyan-50/50 shadow-sm ring-2 ring-cyan-500/20'
-                      : 'border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  <div className="flex w-full items-center justify-between mb-1.5">
-                    <span
-                      className={`grid size-7 place-items-center rounded-lg ${
-                        t.id === 'IN' || t.id === 'RETURN_CLIENT'
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-rose-100 text-rose-700'
-                      }`}
-                    >
-                      <Icon className="size-3.5" />
-                    </span>
-                    <span
-                      className={`text-[10px] font-bold ${
-                        t.effect.startsWith('+') ? 'text-emerald-600' : 'text-rose-600'
-                      }`}
-                    >
-                      {t.effect}
-                    </span>
-                  </div>
-                  <span className="text-xs font-semibold text-slate-800">{t.label}</span>
-                  <span className="text-[10px] text-slate-400 leading-tight mt-0.5">{t.desc}</span>
-                </button>
-              );
-            })}
+        {/* Type de mouvement : fixé selon la section du menu sidebar */}
+        {fixedType ? (
+          <div
+            className={`flex items-center justify-between rounded-xl border px-4 py-3 ${
+              type === 'OUT'
+                ? 'border-rose-200 bg-rose-50/70 text-rose-900'
+                : type === 'IN'
+                ? 'border-emerald-200 bg-emerald-50/70 text-emerald-900'
+                : type === 'RETURN_SUPPLIER'
+                ? 'border-amber-200 bg-amber-50/70 text-amber-900'
+                : 'border-cyan-200 bg-cyan-50/70 text-cyan-900'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <span
+                className={`grid size-8 place-items-center rounded-lg ${
+                  type === 'OUT'
+                    ? 'bg-rose-100 text-rose-700'
+                    : type === 'IN'
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : type === 'RETURN_SUPPLIER'
+                    ? 'bg-amber-100 text-amber-700'
+                    : 'bg-cyan-100 text-cyan-700'
+                }`}
+              >
+                <currentTypeConfig.icon className="size-4" />
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Type :
+                  </span>
+                  <span className="text-sm font-bold text-slate-900">
+                    {currentTypeConfig.label}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">{currentTypeConfig.desc}</p>
+              </div>
+            </div>
+            <span
+              className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                currentTypeConfig.effect.startsWith('+')
+                  ? 'bg-emerald-100 text-emerald-800'
+                  : 'bg-rose-100 text-rose-800'
+              }`}
+            >
+              {currentTypeConfig.effect}
+            </span>
           </div>
-        </div>
+        ) : (
+          <div>
+            <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Type de mouvement *
+            </label>
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              className="w-full rounded-lg border bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            >
+              {MOVEMENT_TYPES.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.label} ({t.effect})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* 2. Informations générales (Référence, Partenaire, Statut) */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
