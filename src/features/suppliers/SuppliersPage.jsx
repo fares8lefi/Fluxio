@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Truck, Plus, Pencil, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Truck, Plus, Pencil, ToggleLeft, ToggleRight, ArrowLeftRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SupplierForm } from './SupplierForm';
+import { PartnerMovementsModal } from '@/features/movements/PartnerMovementsModal';
 import { getSuppliers, createSupplier, updateSupplier, toggleSupplier } from '@/services/supplierService';
 
 export function SuppliersPage() {
@@ -12,6 +13,7 @@ export function SuppliersPage() {
   const [error, setError]         = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing]     = useState(null);
+  const [movementsPartner, setMovementsPartner] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -114,6 +116,13 @@ export function SuppliersPage() {
                   <td className="px-5 py-3">
                     <div className="flex items-center justify-end gap-1">
                       <button
+                        title="Historique des mouvements"
+                        onClick={() => setMovementsPartner({ id: s.id, name: s.name, type: 'supplier' })}
+                        className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-cyan-50 hover:text-cyan-700"
+                      >
+                        <ArrowLeftRight className="size-3.5" />
+                      </button>
+                      <button
                         title="Modifier"
                         onClick={() => openEdit(s)}
                         className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
@@ -145,6 +154,12 @@ export function SuppliersPage() {
         supplier={editing}
         onSubmit={handleSubmit}
         onClose={closeModal}
+      />
+
+      <PartnerMovementsModal
+        open={Boolean(movementsPartner)}
+        partner={movementsPartner}
+        onClose={() => setMovementsPartner(null)}
       />
     </div>
   );
