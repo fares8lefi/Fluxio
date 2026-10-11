@@ -40,6 +40,14 @@ export function StepLogin({ email, password, onChange, onSubmit, loading }) {
           {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
         </button>
       </div>
+      <div className="-mt-2 flex justify-end">
+        <a
+          href="#forgot-password"
+          className="text-xs font-medium text-cyan-700 hover:text-cyan-800 hover:underline"
+        >
+          Mot de passe oublié ?
+        </a>
+      </div>
       <Button
         disabled={loading}
         className="mt-2 h-11 bg-cyan-800 hover:bg-cyan-900"
