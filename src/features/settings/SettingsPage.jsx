@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { updatePersonnelData, changePassword, getMe } from '@/services/authService';
+import { CompanySettingsForm } from './CompanySettingsForm';
+import { TeamSettings } from './TeamSettings';
+import { COMPANY_ROLES } from '@/lib/permissions';
 import {
   User,
   Lock,
@@ -11,13 +14,14 @@ import {
   Shield,
   Save,
   KeyRound,
+  Users,
   Eye,
   EyeOff,
 } from 'lucide-react';
 
-export function SettingsPage() {
-  const { user, setUser } = useAuth();
-  const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'security'
+export function SettingsPage({ initialTab = 'profile' }) {
+  const { user, setUser, can } = useAuth();
+  const [activeTab, setActiveTab] = useState(initialTab); // 'profile' | 'company' | 'team' | 'security'
 
   // État profil
   const [profileData, setProfileData] = useState({
@@ -164,6 +168,34 @@ export function SettingsPage() {
           <User className="size-4" />
           Mon Profil
         </button>
+        {can('company.manage') && (
+        <button
+          type="button"
+          onClick={() => setActiveTab('company')}
+          className={`flex items-center gap-2 pb-3 text-sm font-medium border-b-2 transition ${
+            activeTab === 'company'
+              ? 'border-cyan-700 text-cyan-800'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Building2 className="size-4" />
+          Entreprise
+        </button>
+        )}
+        {can('team.manage') && (
+          <button
+            type="button"
+            onClick={() => setActiveTab('team')}
+            className={`flex items-center gap-2 pb-3 text-sm font-medium border-b-2 transition ${
+              activeTab === 'team'
+                ? 'border-cyan-700 text-cyan-800'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Users className="size-4" />
+            Équipe
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setActiveTab('security')}
@@ -177,6 +209,12 @@ export function SettingsPage() {
           Sécurité & Mot de passe
         </button>
       </div>
+
+      {/* Contenu Onglet Entreprise */}
+      {activeTab === 'company' && can('company.manage') && <CompanySettingsForm />}
+
+      {/* Contenu Onglet Équipe */}
+      {activeTab === 'team' && can('team.manage') && <TeamSettings />}
 
       {/* Contenu Onglet Profil */}
       {activeTab === 'profile' && (
@@ -202,7 +240,9 @@ export function SettingsPage() {
                 </span>
                 <div>
                   <p className="text-xs text-slate-400">Rôle</p>
-                  <p className="font-medium text-slate-800">{user?.role || 'UTILISATEUR'}</p>
+                  <p className="font-medium text-slate-800">
+                    {user?.role === 'admin' ? 'Administrateur' : COMPANY_ROLES[user?.company_role]?.label ?? 'Gérant'}
+                  </p>
                 </div>
               </div>
             </div>
