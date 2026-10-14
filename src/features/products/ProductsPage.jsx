@@ -1,8 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Package2, Plus, Pencil, Trash2, Filter, X, ChevronDown, TrendingDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ExportButton } from '@/components/ui/ExportButton';
+import { exportProducts } from '@/services/exportService';
+import { TableSkeleton } from '@/components/ui/Skeleton';
+import { useToast } from '@/components/ui/Toast';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
 import { ProductForm } from './ProductForm';
 import { StockEvolutionChart } from '@/components/charts/StockEvolutionChart';
 import { StockAlertsLineChart } from '@/components/charts/StockAlertsLineChart';
@@ -33,6 +39,8 @@ function stockLabel(p) {
 const EMPTY_FILTERS = { name: '', categoryId: '', supplierId: '', minPrice: '', maxPrice: '' };
 
 export function ProductsPage() {
+  const { can } = useAuth();
+  const canWrite = can('stock.write');
   const [products, setProducts]     = useState([]);
   const [categories, setCategories] = useState([]);
   const [suppliers, setSuppliers]   = useState([]);
@@ -50,6 +58,8 @@ export function ProductsPage() {
   const [filters, setFilters]       = useState(EMPTY_FILTERS);
   const [activeFilters, setActiveFilters] = useState(EMPTY_FILTERS);
   const [view, setView]             = useState('all'); // 'all' | 'belowMin' | 'outOfStock'
+  const toast   = useToast();
+  const confirm = useConfirm();
 
   // ── Load data ──────────────────────────────────────────────────────────────
 
@@ -142,13 +152,25 @@ export function ProductsPage() {
     if (editing) await updateProduct(editing.id, payload);
     else         await createProduct(payload);
     closeModal();
+    toast.success(editing ? 'Produit mis à jour' : 'Produit créé');
     reload();
   };
 
   const handleDelete = async (p) => {
-    if (!window.confirm(`Supprimer "${p.name}" ? Cette action est irréversible.`)) return;
-    await deleteProduct(p.id);
-    reload();
+    const ok = await confirm({
+      title: 'Supprimer le produit',
+      description: `« ${p.name} » sera définitivement supprimé. Cette action est irréversible.`,
+      confirmLabel: 'Supprimer',
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await deleteProduct(p.id);
+      toast.success('Produit supprimé');
+      reload();
+    } catch (e) {
+      toast.error(e.message || 'Impossible de supprimer le produit');
+    }
   };
 
   const applyFilters = () => {
@@ -188,7 +210,8 @@ export function ProductsPage() {
               </span>
             )}
           </Button>
-          <Button className="rounded-xl" onClick={openCreate}>
+          <ExportButton onExport={exportProducts} />
+          <Button className="rounded-xl" onClick={openCreate} hidden={!canWrite}>
             <Plus className="mr-2 size-4" /> Nouveau produit
           </Button>
         </div>
@@ -316,9 +339,7 @@ export function ProductsPage() {
           <StockAlertsLineChart products={products} />
         </div>
       ) : loading ? (
-        <div className="flex justify-center py-20">
-          <div className="size-8 animate-spin rounded-full border-4 border-slate-200 border-t-cyan-700" />
-        </div>
+        <TableSkeleton columns={6} />
       ) : displayed.length === 0 ? (
         <EmptyState
           Icon={Package2}
@@ -328,7 +349,7 @@ export function ProductsPage() {
               ? 'Bonne nouvelle — pas de problème de stock ici.'
               : 'Créez votre premier produit pour commencer à gérer votre stock.'
           }
-          actionLabel={view === 'all' ? 'Nouveau produit' : undefined}
+          actionLabel={view === 'all' && canWrite ? 'Nouveau produit' : undefined}
           onAction={view === 'all' ? openCreate : undefined}
         />
       ) : (
@@ -385,6 +406,7 @@ export function ProductsPage() {
                   <td className="px-5 py-3">
                     <div className="flex items-center justify-end gap-1">
                       <button
+                        hidden={!canWrite}
                         title="Modifier"
                         onClick={() => openEdit(p)}
                         className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
@@ -392,6 +414,7 @@ export function ProductsPage() {
                         <Pencil className="size-3.5" />
                       </button>
                       <button
+                        hidden={!canWrite}
                         title="Supprimer"
                         onClick={() => handleDelete(p)}
                         className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600"
