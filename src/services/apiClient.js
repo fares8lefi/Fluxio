@@ -81,3 +81,46 @@ export async function request(path, body, method = 'GET', isRetry = false) {
 
   return data;
 }
+
+/**
+ * Télécharge un fichier (export CSV…) avec les cookies de session.
+ * Sur 401, tente un rafraîchissement du jeton puis réessaie une fois.
+ * @param {string} path — ex. /api/exports/products
+ * @param {string} fallbackName — nom utilisé si le serveur n'en fournit pas
+ */
+export async function downloadFile(path, fallbackName = 'export.csv') {
+  const get = () => fetch(`${API_URL}${path}`, { credentials: 'include' });
+  let response;
+  try {
+    response = await get();
+    if (response.status === 401) {
+      const refreshed = await fetch(`${API_URL}/api/users/refreshToken`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (refreshed.ok) response = await get();
+    }
+  } catch {
+    throw new Error('Impossible de contacter le serveur. Vérifiez votre connexion.');
+  }
+
+  if (!response.ok) {
+    let message = HTTP_MESSAGES[response.status] ?? 'Le téléchargement a échoué.';
+    try {
+      message = (await response.json()).message || message;
+    } catch {
+      /* corps non JSON */
+    }
+    throw new Error(message);
+  }
+
+  const disposition = response.headers.get('Content-Disposition') ?? '';
+  const name = disposition.match(/filename="?([^";]+)"?/)?.[1] ?? fallbackName;
+  const url = URL.createObjectURL(await response.blob());
+  const link = Object.assign(document.createElement('a'), { href: url, download: name });
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return name;
+}
