@@ -1,3 +1,4 @@
+import { Spinner } from '@/components/ui/Spinner';
 import { useState, useEffect, useCallback } from 'react';
 import {
   ArrowLeftRight,
@@ -7,6 +8,7 @@ import {
   Eye,
   Calendar,
   Package,
+  ClipboardCheck,
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/button';
@@ -38,6 +40,11 @@ const TYPE_CONFIG = {
     label: 'Retour Client',
     icon: RotateCcw,
     badgeClass: 'bg-cyan-100 text-cyan-800',
+  },
+  ADJUSTMENT: {
+    label: 'Ajustement',
+    icon: ClipboardCheck,
+    badgeClass: 'bg-violet-100 text-violet-800',
   },
 };
 
@@ -142,7 +149,7 @@ export function PartnerMovementsModal({ open, onClose, partner }) {
           {/* Table or Empty state */}
           {loading ? (
             <div className="flex justify-center py-12">
-              <div className="size-7 animate-spin rounded-full border-4 border-slate-200 border-t-cyan-700" />
+              <Spinner />
             </div>
           ) : movements.length === 0 ? (
             <EmptyState
