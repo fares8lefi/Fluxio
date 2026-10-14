@@ -10,6 +10,7 @@ import {
   TriangleAlert,
   Ban,
   Package,
+  ClipboardCheck,
 } from 'lucide-react';
 
 /** Description lisible d'un type de mouvement (libellé + ton + pictogramme) */
@@ -18,6 +19,7 @@ const MOVEMENT_TYPES = {
   OUT: { label: 'Sortie', variant: 'active', Icon: ArrowUpRight },
   RETURN_SUPPLIER: { label: 'Retour fournisseur', variant: 'alert', Icon: RotateCcw },
   RETURN_CLIENT: { label: 'Retour client', variant: 'inactive', Icon: RotateCcw },
+  ADJUSTMENT: { label: 'Ajustement', variant: 'alert', Icon: ClipboardCheck },
 };
 
 const formatMoney = (value) => Number(value ?? 0).toFixed(3);
