@@ -1,3 +1,4 @@
+import { PageLoader } from '@/components/ui/Spinner';
 import { useState, useEffect, useCallback } from 'react';
 import {
   getCompanyDetails,
@@ -7,6 +8,7 @@ import {
 } from '@/services/adminService';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/button';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
 import {
   ArrowLeft,
   Building2,
@@ -85,13 +87,15 @@ export function CompanyDetails({ companyId, onBack }) {
   };
 
   // Toggle statut entreprise
+  const confirm = useConfirm();
+
   const handleToggleCompany = async () => {
     if (!company) return;
     const nextState = !company.is_active;
     const confirmMsg = nextState
       ? 'Voulez-vous réactiver cette entreprise ?'
       : 'Voulez-vous suspendre cette entreprise ? Ses utilisateurs ne pourront plus se connecter.';
-    if (!window.confirm(confirmMsg)) return;
+    if (!(await confirm({ title: nextState ? 'Confirmer la réactivation' : 'Confirmer la suspension', description: confirmMsg, confirmLabel: nextState ? 'Réactiver' : 'Suspendre', destructive: !nextState }))) return;
 
     try {
       const res = await toggleCompanyStatus(companyId, nextState);
@@ -108,7 +112,7 @@ export function CompanyDetails({ companyId, onBack }) {
     const confirmMsg = nextState
       ? 'Activer cet utilisateur ?'
       : 'Suspendre l\'accès de cet utilisateur ?';
-    if (!window.confirm(confirmMsg)) return;
+    if (!(await confirm({ title: nextState ? 'Confirmer la réactivation' : 'Confirmer la suspension', description: confirmMsg, confirmLabel: nextState ? 'Réactiver' : 'Suspendre', destructive: !nextState }))) return;
 
     try {
       const res = await toggleUserStatus(userId, nextState);
@@ -121,9 +125,7 @@ export function CompanyDetails({ companyId, onBack }) {
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="size-8 animate-spin rounded-full border-4 border-slate-200 border-t-cyan-700" />
-      </div>
+      <PageLoader />
     );
   }
 
