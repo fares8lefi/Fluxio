@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { ProductsPage } from '@/features/products/ProductsPage';
 import { CategoriesPage } from '@/features/categories/CategoriesPage';
+import { InventoryPage } from '@/features/inventory/InventoryPage';
 import { SuppliersPage } from '@/features/suppliers/SuppliersPage';
 import {
   MovementsPage,
@@ -16,6 +17,7 @@ import { ManagerDashboard } from '@/features/manager/ManagerDashboard';
 import { InvoicesPage } from '@/features/invoices/InvoicesPage';
 import { QuotesPage } from '@/features/invoices/QuotesPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
+import { CompanyCompletenessBanner } from '@/features/settings/CompanyCompletenessBanner';
 import { useState, useEffect, useCallback } from 'react';
 import {
   Package,
@@ -29,6 +31,10 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { motion } from 'motion/react';
+import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
+import { fadeUpItem, staggerContainer } from '@/lib/motion';
+import { formatTND } from '@/lib/fiscal';
 import { Badge } from '@/components/ui/Badge';
 import { StockEvolutionChart } from '@/components/charts/StockEvolutionChart';
 import { StockAlertsLineChart } from '@/components/charts/StockAlertsLineChart';
@@ -46,7 +52,7 @@ function useSubRoute() {
 }
 
 function HomePage({ navigate }) {
-  const { user } = useAuth();
+  const { user, can } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState(null);
@@ -103,6 +109,8 @@ function HomePage({ navigate }) {
 
   return (
     <div className="space-y-6">
+      <CompanyCompletenessBanner onNavigate={navigate} />
+
       {/* ── Top Welcome & Actions ── */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -128,6 +136,7 @@ function HomePage({ navigate }) {
           </Button>
           <Button
             onClick={() => navigate('movements/in')}
+            hidden={!can('stock.write')}
             className="rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white text-xs h-9 shadow-xs"
           >
             <ArrowDownLeft className="mr-1.5 size-4" />
@@ -137,21 +146,27 @@ function HomePage({ navigate }) {
       </div>
 
       {/* ── KPI Cards ── */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Moment clé : cascade + compteurs à l'ouverture du tableau de bord */}
+      <motion.div
+        variants={staggerContainer()}
+        initial="hidden"
+        animate={loading ? 'hidden' : 'show'}
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+      >
         {/* Total Produits */}
-        <div className="rounded-xl border bg-white p-5 shadow-sm">
+        <motion.div variants={fadeUpItem} className="rounded-xl border bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="grid size-10 place-items-center rounded-lg bg-cyan-50 text-cyan-700">
               <Package className="size-5" />
             </span>
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Catalogue</span>
           </div>
-          <p className="mt-3 text-2xl font-bold tabular-nums text-slate-900">{totalProducts}</p>
+          <p className="mt-3 text-2xl font-bold tabular-nums text-slate-900">{loading ? '—' : <AnimatedNumber value={totalProducts} />}</p>
           <p className="mt-0.5 text-xs text-slate-500">Références suivies</p>
-        </div>
+        </motion.div>
 
         {/* Alertes Seuil Minimum */}
-        <div className="rounded-xl border bg-white p-5 shadow-sm">
+        <motion.div variants={fadeUpItem} className="rounded-xl border bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="grid size-10 place-items-center rounded-lg bg-amber-50 text-amber-700">
               <ShieldAlert className="size-5" />
@@ -164,12 +179,12 @@ function HomePage({ navigate }) {
               <span className="text-xs text-emerald-600 font-semibold">Stock sain</span>
             )}
           </div>
-          <p className="mt-3 text-2xl font-bold tabular-nums text-amber-600">{alertCount}</p>
+          <p className="mt-3 text-2xl font-bold tabular-nums text-amber-600">{loading ? '—' : <AnimatedNumber value={alertCount} />}</p>
           <p className="mt-0.5 text-xs text-slate-500">Sous le seuil d'alerte (Min)</p>
-        </div>
+        </motion.div>
 
         {/* Ruptures de stock */}
-        <div className="rounded-xl border bg-white p-5 shadow-sm">
+        <motion.div variants={fadeUpItem} className="rounded-xl border bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="grid size-10 place-items-center rounded-lg bg-rose-50 text-rose-700">
               <AlertCircle className="size-5" />
@@ -182,12 +197,12 @@ function HomePage({ navigate }) {
               <span className="text-xs text-emerald-600 font-semibold">Aucune rupture</span>
             )}
           </div>
-          <p className="mt-3 text-2xl font-bold tabular-nums text-rose-600">{outOfStockCount}</p>
+          <p className="mt-3 text-2xl font-bold tabular-nums text-rose-600">{loading ? '—' : <AnimatedNumber value={outOfStockCount} />}</p>
           <p className="mt-0.5 text-xs text-slate-500">Ruptures immédiates (0 stock)</p>
-        </div>
+        </motion.div>
 
         {/* Chiffre d'affaires facturé */}
-        <div className="rounded-xl border bg-white p-5 shadow-sm">
+        <motion.div variants={fadeUpItem} className="rounded-xl border bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="grid size-10 place-items-center rounded-lg bg-indigo-50 text-indigo-700">
               <TrendingUp className="size-5" />
@@ -195,11 +210,11 @@ function HomePage({ navigate }) {
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{totalSales} ventes</span>
           </div>
           <p className="mt-3 text-2xl font-bold tabular-nums text-slate-900">
-            {Number(totalRevenue).toFixed(3)} <span className="text-xs font-normal">TND</span>
+            {loading ? '—' : <AnimatedNumber value={formatTND(totalRevenue)} />} <span className="text-xs font-normal">TND</span>
           </p>
           <p className="mt-0.5 text-xs text-slate-500">Chiffre d'affaires facturé</p>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* ── ROW 1: Courbe d'évolution temporelle + Jauge Donut ── */}
       <div className="grid gap-6 lg:grid-cols-3">
@@ -332,6 +347,7 @@ function HomePage({ navigate }) {
 function SubRouter({ sub, navigate }) {
   if (sub === 'products')                  return <ProductsPage />;
   if (sub === 'categories')                return <CategoriesPage />;
+  if (sub === 'inventory')                 return <InventoryPage />;
   if (sub === 'suppliers')                 return <SuppliersPage />;
   if (sub === 'movements')                                     return <MovementsPage />;
   if (sub === 'movements/in' || sub === 'achats')              return <MovementsInPage />;
@@ -344,6 +360,7 @@ function SubRouter({ sub, navigate }) {
   if (sub === 'invoices/quotes')       return <QuotesPage />;
   if (sub === 'invoices/credit-notes') return <InvoicesPage initialType="CREDIT_NOTE" />;
   if (sub === 'settings')              return <SettingsPage />;
+  if (sub === 'settings/company')      return <SettingsPage initialTab="company" />;
   return <HomePage navigate={navigate} />;
 }
 
