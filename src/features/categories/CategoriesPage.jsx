@@ -1,12 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Tag, Plus, Pencil, ToggleLeft, ToggleRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { TableSkeleton } from '@/components/ui/Skeleton';
+import { useToast } from '@/components/ui/Toast';
 import { CategoryForm } from './CategoryForm';
 import { getCategories, createCategory, updateCategory, toggleCategory } from '@/services/categoryService';
 
 export function CategoriesPage() {
+  const { can } = useAuth();
+  const canWrite = can('stock.write');
   const [categories, setCategories] = useState([]);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState(null);
@@ -31,6 +36,7 @@ export function CategoriesPage() {
   const openCreate = () => { setEditing(null); setModalOpen(true); };
   const openEdit   = (cat) => { setEditing(cat); setModalOpen(true); };
   const closeModal = () => setModalOpen(false);
+  const toast = useToast();
 
   const handleSubmit = async (payload) => {
     if (editing) {
@@ -39,12 +45,18 @@ export function CategoriesPage() {
       await createCategory(payload);
     }
     closeModal();
+    toast.success(editing ? 'Catégorie mise à jour' : 'Catégorie créée');
     load();
   };
 
   const handleToggle = async (cat) => {
-    await toggleCategory(cat.id, !cat.is_active);
-    load();
+    try {
+      await toggleCategory(cat.id, !cat.is_active);
+      toast.success(cat.is_active ? 'Catégorie désactivée' : 'Catégorie activée');
+      load();
+    } catch (err) {
+      toast.error(err.message || 'Impossible de modifier le statut');
+    }
   };
 
   return (
@@ -57,7 +69,7 @@ export function CategoriesPage() {
             {categories.length} catégorie{categories.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <Button className="rounded-xl" onClick={openCreate}>
+        <Button className="rounded-xl" onClick={openCreate} hidden={!canWrite}>
           <Plus className="mr-2 size-4" /> Nouvelle catégorie
         </Button>
       </div>
@@ -71,15 +83,13 @@ export function CategoriesPage() {
 
       {/* Table */}
       {loading ? (
-        <div className="flex justify-center py-20">
-          <div className="size-8 animate-spin rounded-full border-4 border-slate-200 border-t-cyan-700" />
-        </div>
+        <TableSkeleton columns={4} />
       ) : categories.length === 0 ? (
         <EmptyState
           Icon={Tag}
           title="Aucune catégorie"
           description="Créez votre première catégorie pour organiser votre catalogue produits."
-          actionLabel="Nouvelle catégorie"
+          actionLabel={canWrite ? 'Nouvelle catégorie' : undefined}
           onAction={openCreate}
         />
       ) : (
@@ -114,6 +124,7 @@ export function CategoriesPage() {
                   <td className="px-5 py-3">
                     <div className="flex items-center justify-end gap-1">
                       <button
+                        hidden={!canWrite}
                         title="Modifier"
                         onClick={() => openEdit(cat)}
                         className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
@@ -121,6 +132,7 @@ export function CategoriesPage() {
                         <Pencil className="size-3.5" />
                       </button>
                       <button
+                        hidden={!canWrite}
                         title={cat.is_active ? 'Désactiver' : 'Activer'}
                         onClick={() => handleToggle(cat)}
                         className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
