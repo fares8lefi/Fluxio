@@ -55,7 +55,7 @@ export function MarginByCategoryChart({ byCategory = [], isLoading = false }) {
       icon={Scale}
       tone="indigo"
       title="Ventes & marge estimée par catégorie"
-      subtitle="Marge estimée sur le prix d'achat actuel — le prix d'achat n'est pas figé dans les lignes de vente."
+      subtitle="Marge calculée sur le prix d'achat en vigueur au moment de chaque vente."
       isLoading={isLoading}
       isEmpty={data.length === 0}
       emptyLabel="Aucune vente sur cette période."
