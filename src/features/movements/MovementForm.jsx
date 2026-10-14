@@ -64,6 +64,9 @@ export function MovementForm({
   const [type, setType] = useState(resolvedType);
   const [reference, setReference] = useState('');
   const [note, setNote] = useState('');
+  // Entrée de stock : facture du fournisseur (traçabilité, TVA déductible)
+  const [supplierInvoiceRef, setSupplierInvoiceRef] = useState('');
+  const [supplierInvoiceDate, setSupplierInvoiceDate] = useState('');
   const [supplierId, setSupplierId] = useState('');
   const [clientId, setClientId] = useState('');
   const [status, setStatus] = useState('CONFIRMED');
@@ -82,6 +85,8 @@ export function MovementForm({
       setType(initialType);
       setReference('');
       setNote('');
+      setSupplierInvoiceRef('');
+      setSupplierInvoiceDate('');
       setSupplierId('');
       setClientId('');
       setStatus('CONFIRMED');
@@ -180,6 +185,10 @@ export function MovementForm({
       type,
       reference: reference.trim() || undefined,
       note: note.trim() || undefined,
+      ...(type === 'IN' && {
+        supplier_invoice_ref: supplierInvoiceRef.trim() || undefined,
+        supplier_invoice_date: supplierInvoiceDate || undefined,
+      }),
       status,
       supplierId: currentTypeConfig.partnerType === 'supplier' && supplierId ? supplierId : undefined,
       clientId: currentTypeConfig.partnerType === 'client' && clientId ? clientId : undefined,
@@ -214,6 +223,7 @@ export function MovementForm({
           : 'Nouveau Retour Client'
       }
       onClose={onClose}
+      size="xl"
       footer={
         <div className="flex w-full items-center justify-between">
           <div className="text-left">
@@ -244,7 +254,7 @@ export function MovementForm({
         </div>
       }
     >
-      <form id="movement-form" onSubmit={handleSubmit} className="space-y-5 max-h-[70vh] overflow-y-auto pr-1">
+      <form id="movement-form" onSubmit={handleSubmit} className="space-y-5">
         {error && (
           <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
             <AlertCircle className="size-4 shrink-0" />
@@ -495,6 +505,30 @@ export function MovementForm({
             </div>
           )}
         </div>
+
+        {/* Facture fournisseur (entrées uniquement) */}
+        {type === 'IN' && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block text-xs font-medium text-slate-700">
+              N° de facture fournisseur
+              <input
+                value={supplierInvoiceRef}
+                onChange={(e) => setSupplierInvoiceRef(e.target.value)}
+                placeholder="ex. FA-2026-0142"
+                className="mt-1 w-full rounded-lg border px-3 py-2 text-xs focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+              />
+            </label>
+            <label className="block text-xs font-medium text-slate-700">
+              Date de la facture
+              <input
+                type="date"
+                value={supplierInvoiceDate}
+                onChange={(e) => setSupplierInvoiceDate(e.target.value)}
+                className="mt-1 w-full rounded-lg border px-3 py-2 text-xs focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+              />
+            </label>
+          </div>
+        )}
 
         {/* 4. Note / Commentaire */}
         <div>
