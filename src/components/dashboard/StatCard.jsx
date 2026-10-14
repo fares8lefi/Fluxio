@@ -1,3 +1,7 @@
+import { motion } from 'motion/react';
+import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
+import { fadeUpItem } from '@/lib/motion';
+
 const TONES = {
   cyan: { icon: 'bg-cyan-50 text-cyan-700', value: 'text-slate-900' },
   emerald: { icon: 'bg-emerald-50 text-emerald-700', value: 'text-emerald-700' },
@@ -20,6 +24,9 @@ const TONES = {
  * @param {string} [hint] — précision sous la valeur
  * @param {React.ReactNode} [trailing] — contenu aligné à droite de l'en-tête (variation…)
  * @param {'sm'|'md'} size
+ *
+ * Animation : la valeur s'incrémente jusqu'au chiffre final ; placée dans un
+ * conteneur `staggerContainer` (src/lib/motion.js), la tuile apparaît en cascade.
  */
 export function StatCard({
   icon: Icon,
@@ -34,7 +41,12 @@ export function StatCard({
   const palette = TONES[tone] ?? TONES.cyan;
 
   return (
-    <div className="rounded-xl border bg-white shadow-sm">
+    <motion.div
+      variants={fadeUpItem}
+      whileHover={{ y: -2 }}
+      transition={{ duration: 0.2 }}
+      className="rounded-xl border bg-white shadow-sm transition-shadow hover:shadow-md"
+    >
       <div
         className={`flex items-center gap-2.5 ${size === 'sm' ? 'p-3' : 'p-5 pb-3'}`}
       >
@@ -52,12 +64,12 @@ export function StatCard({
         <p
           className={`font-bold tabular-nums ${palette.value} ${size === 'sm' ? 'text-lg' : 'text-xl'}`}
         >
-          {value}
+          <AnimatedNumber value={value} />
           {unit && <span className="ml-1 text-xs font-normal text-slate-400">{unit}</span>}
         </p>
         {hint && <p className="mt-0.5 text-[11px] text-slate-500">{hint}</p>}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
