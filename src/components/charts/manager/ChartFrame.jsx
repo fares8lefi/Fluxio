@@ -1,3 +1,5 @@
+import { Spinner } from '@/components/ui/Spinner';
+
 /**
  * Cadre commun des graphiques « Pilotage » : conteneur blanc `rounded-xl
  * border`, en-tête (icône + titre + précision) et état de chargement / vide.
@@ -39,7 +41,7 @@ export function ChartFrame({
       <div className="pt-4" style={{ minHeight: height }}>
         {isLoading ? (
           <div className="flex items-center justify-center" style={{ height }}>
-            <div className="size-7 animate-spin rounded-full border-4 border-slate-200 border-t-cyan-700" />
+            <Spinner />
           </div>
         ) : isEmpty ? (
           <div className="flex flex-col items-center justify-center text-xs text-slate-400" style={{ height }}>
