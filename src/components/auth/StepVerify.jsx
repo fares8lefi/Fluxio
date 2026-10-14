@@ -42,14 +42,15 @@ export function StepVerify({ email, code, onCodeChange, onSubmit, loading }) {
         <input
           required
           inputMode="numeric"
-          maxLength={4}
-          pattern="[0-9]{4}"
+          maxLength={6}
+          pattern="[0-9]{6}"
           value={code}
           onChange={(event) =>
             onCodeChange(event.target.value.replace(/\D/g, ''))
           }
           className="h-12 rounded-lg border border-slate-200 text-center text-lg font-semibold tracking-[.5em] outline-none focus:border-cyan-700 focus:ring-3 focus:ring-cyan-100"
-          placeholder="0000"
+          placeholder="000000"
+          autoComplete="one-time-code"
         />
       </label>
 
