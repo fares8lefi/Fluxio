@@ -1,3 +1,4 @@
+import { Spinner } from '@/components/ui/Spinner';
 import { useState, useEffect, useCallback } from 'react';
 import {
   getPlatformStats,
@@ -6,6 +7,7 @@ import {
 } from '@/services/adminService';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/button';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
 import {
   Building2,
   Users,
@@ -65,12 +67,14 @@ export function AdminOverview({ onSelectCompany }) {
     loadData();
   };
 
+  const confirm = useConfirm();
+
   const handleToggleStatus = async (company) => {
     const nextState = !company.is_active;
     const confirmMsg = nextState
       ? `Réactiver l'entreprise ${company.name} ?`
       : `Suspendre l'entreprise ${company.name} ? Les utilisateurs de cette entreprise ne pourront plus se connecter.`;
-    if (!window.confirm(confirmMsg)) return;
+    if (!(await confirm({ title: nextState ? 'Confirmer la réactivation' : 'Confirmer la suspension', description: confirmMsg, confirmLabel: nextState ? 'Réactiver' : 'Suspendre', destructive: !nextState }))) return;
 
     try {
       const res = await toggleCompanyStatus(company.id, nextState);
@@ -239,7 +243,7 @@ export function AdminOverview({ onSelectCompany }) {
               {loading ? (
                 <tr>
                   <td colSpan="9" className="py-8 text-center text-slate-400">
-                    <div className="inline-block size-6 animate-spin rounded-full border-2 border-slate-200 border-t-cyan-700" />
+                    <Spinner size="sm" />
                   </td>
                 </tr>
               ) : companies.length > 0 ? (
