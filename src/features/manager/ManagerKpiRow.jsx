@@ -1,4 +1,7 @@
+import { motion } from 'motion/react';
 import { StatCard } from '@/components/dashboard/StatCard';
+import { staggerContainer } from '@/lib/motion';
+import { Skeleton } from '@/components/ui/Skeleton';
 import {
   TrendingUp,
   Wallet,
@@ -71,7 +74,7 @@ export function ManagerKpiRow({ kpis, isLoading = false }) {
     return (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 8 }).map((_, index) => (
-          <div key={index} className="h-[104px] animate-pulse rounded-xl border bg-white" />
+          <Skeleton key={index} className="h-[104px] rounded-xl border" />
         ))}
       </div>
     );
@@ -127,7 +130,7 @@ export function ManagerKpiRow({ kpis, isLoading = false }) {
       label: 'Marge estimée',
       value: formatMoney(kpis.margin_estimated?.value),
       unit: 'TND',
-      hint: kpis.margin_estimated_note || 'Estimation — prix d’achat actuel',
+      hint: kpis.margin_estimated_note || 'Sur le prix d’achat au moment de la vente',
       goodDirection: 'up',
     },
     {
@@ -170,7 +173,13 @@ export function ManagerKpiRow({ kpis, isLoading = false }) {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Moment clé : les tuiles apparaissent en cascade à l'ouverture du tableau de bord */}
+      <motion.div
+        variants={staggerContainer()}
+        initial="hidden"
+        animate="show"
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+      >
         {cards.map((card) => (
           <StatCard
             key={card.key}
@@ -183,11 +192,11 @@ export function ManagerKpiRow({ kpis, isLoading = false }) {
             trailing={<DeltaBadge delta={kpis[card.key]?.delta_pct} goodDirection={card.goodDirection} />}
           />
         ))}
-      </div>
+      </motion.div>
 
       <p className="flex items-center gap-1.5 text-[11px] text-slate-500">
         <Package className="size-3 shrink-0" aria-hidden="true" />
-        La marge est une estimation : le prix d'achat n'est pas figé dans les lignes de vente.
+        La marge est calculée sur le prix d'achat figé au moment de chaque vente.
       </p>
     </section>
   );
