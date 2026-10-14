@@ -56,6 +56,7 @@ export function ClientForm({ open, client, onSubmit, onClose }) {
       open={open}
       title={isEdit ? 'Modifier le client' : 'Nouveau client'}
       onClose={onClose}
+      size="lg"
       footer={
         <>
           <Button variant="outline" type="button" onClick={onClose} disabled={isSubmitting}>
