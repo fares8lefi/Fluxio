@@ -1,7 +1,12 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { getMe, login as apiLogin, logout as apiLogout } from '@/services/authService';
+import { can as canDo } from '@/lib/permissions';
 
 const AuthContext = createContext();
+
+// Startup session check, shared so StrictMode's double effect run
+// (dev only) sends a single GET /me instead of two
+let sessionCheck = null;
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -9,7 +14,8 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     // Verify session on application startup
-    getMe()
+    sessionCheck ??= getMe();
+    sessionCheck
       .then((data) => {
         if (data.user) setUser(data.user);
       })
@@ -29,8 +35,22 @@ export function AuthProvider({ children }) {
     window.location.hash = '#login';
   };
 
+  const isAdmin = String(user?.role || '').toLowerCase() === 'admin';
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading, login, logout, setUser }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated: !!user,
+        isAdmin,
+        loading,
+        // can('stock.write') … : masque les actions non autorisées pour le rôle
+        can: (action) => canDo(user, action),
+        login,
+        logout,
+        setUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
