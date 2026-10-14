@@ -1,12 +1,18 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import {
-  FileText, Plus, Eye, CheckCircle2, XCircle, RotateCcw, Search, ListChecks
+  FileText, Plus, Eye, Wallet, XCircle, RotateCcw, Search, ListChecks, Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { TableSkeleton } from '@/components/ui/Skeleton';
+import { useToast } from '@/components/ui/Toast';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { InvoicePdfModal } from './InvoicePdfModal';
 import { GenerateInvoiceModal } from './GenerateInvoiceModal';
+import { PaymentModal } from './PaymentModal';
+import { AccountantExportModal } from './AccountantExportModal';
 import { InvoicingStats, SalesPipelineStats } from './InvoiceStats';
 import {
   CompanyInfoAlert,
@@ -20,6 +26,7 @@ import { getClients } from '@/services/clientService';
 
 const STATUS_CONFIG = {
   PENDING:  { label: 'En attente', variant: 'alert' },
+  PARTIALLY_PAID: { label: 'Partiellement payée', variant: 'info' },
   PAID:     { label: 'Payée',      variant: 'active' },
   CANCELLED:{ label: 'Annulée',    variant: 'inactive' },
 };
@@ -33,6 +40,8 @@ const TYPE_CONFIG = {
 const LIMIT_PER_PAGE = 10;
 
 export function InvoicesPage({ initialType = 'ALL' }) {
+  const { can } = useAuth();
+  const canWriteBilling = can('billing.write');
   const [invoices, setInvoices]       = useState([]);
   const [clients, setClients]         = useState([]);
   const [loading, setLoading]         = useState(true);
@@ -42,6 +51,8 @@ export function InvoicesPage({ initialType = 'ALL' }) {
   const [generateOpen, setGenerateOpen] = useState(false);
   const [selectedMovementId, setSelectedMovementId] = useState('');
   const [pdfInvoiceId, setPdfInvoiceId] = useState(null);
+  const [paymentInvoice, setPaymentInvoice] = useState(null);
+  const [exportOpen, setExportOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
 
   // ── Ventes (mouvements OUT) disponibles pour la facturation ──
@@ -95,28 +106,43 @@ export function InvoicesPage({ initialType = 'ALL' }) {
 
   useEffect(() => { setFilterType(initialType); }, [initialType]);
 
+  const toast   = useToast();
+  const confirm = useConfirm();
+
   const handleStatusUpdate = async (inv, status) => {
-    if (!window.confirm(`Changer le statut de la facture ${inv.reference} en "${status}" ?`)) return;
+    const ok = await confirm({
+      title: 'Changer le statut',
+      description: `La facture ${inv.reference} passera au statut « ${status} ».`,
+      destructive: status === 'CANCELLED',
+    });
+    if (!ok) return;
     setActionLoading(inv.id);
     try {
       await updateInvoiceStatus(inv.id, status);
+      toast.success(`Facture ${inv.reference} mise à jour`);
       load();
     } catch (e) {
-      setError(e.message);
+      toast.error(e.message || 'Impossible de modifier le statut');
     } finally {
       setActionLoading(null);
     }
   };
 
   const handleCreditNote = async (inv) => {
-    const reason = window.prompt(`Motif de l'avoir sur la facture ${inv.reference} :`);
+    const reason = await confirm({
+      title: 'Émettre un avoir',
+      description: `Un avoir sera créé sur la facture ${inv.reference}.`,
+      confirmLabel: "Créer l'avoir",
+      input: { label: "Motif de l'avoir", placeholder: 'Ex. : retour de marchandise, erreur de prix…' },
+    });
     if (reason === null) return;
     setActionLoading(inv.id);
     try {
       await createCreditNote(inv.id, reason);
+      toast.success(`Avoir créé sur la facture ${inv.reference}`);
       load();
     } catch (e) {
-      setError(e.message);
+      toast.error(e.message || "Impossible de créer l'avoir");
     } finally {
       setActionLoading(null);
     }
@@ -126,12 +152,13 @@ export function InvoicesPage({ initialType = 'ALL' }) {
   const totalTTC = invoices
     .filter(i => i.status !== 'CANCELLED' && i.invoice_type !== 'CREDIT_NOTE')
     .reduce((s, i) => s + (i.total_ttc || 0), 0);
+  // Encaissé = règlements reçus ; en attente = reste à payer des factures ouvertes
   const totalPaid = invoices
-    .filter(i => i.status === 'PAID')
-    .reduce((s, i) => s + (i.total_ttc || 0), 0);
+    .filter(i => i.invoice_type === 'SALE' && i.status !== 'CANCELLED')
+    .reduce((s, i) => s + (i.amount_paid || 0), 0);
   const totalPending = invoices
-    .filter(i => i.status === 'PENDING' && i.invoice_type === 'SALE')
-    .reduce((s, i) => s + (i.total_ttc || 0), 0);
+    .filter(i => (i.status === 'PENDING' || i.status === 'PARTIALLY_PAID') && i.invoice_type === 'SALE')
+    .reduce((s, i) => s + Math.max((i.net_payable ?? i.total_ttc ?? 0) - (i.amount_paid || 0), 0), 0);
   const creditNoteCount = invoices.filter(i => i.invoice_type === 'CREDIT_NOTE').length;
 
   const tabs = [
@@ -150,12 +177,18 @@ export function InvoicesPage({ initialType = 'ALL' }) {
             Gestion des factures de vente selon la réglementation fiscale tunisienne.
           </p>
         </div>
-        <Button
-          onClick={() => openGenerate()}
-          className="rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white"
-        >
-          <Plus className="mr-2 size-4" /> Générer une facture
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" className="rounded-xl" onClick={() => setExportOpen(true)}>
+            <Download className="mr-2 size-4" /> Exporter pour le comptable
+          </Button>
+          <Button
+            onClick={() => openGenerate()}
+            hidden={!canWriteBilling}
+            className="rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white"
+          >
+            <Plus className="mr-2 size-4" /> Générer une facture
+          </Button>
+        </div>
       </div>
 
       {/* ── Indicateurs (en haut) ── */}
@@ -274,6 +307,7 @@ export function InvoicesPage({ initialType = 'ALL' }) {
             >
               <option value="">Tous les statuts</option>
               <option value="PENDING">En attente</option>
+              <option value="PARTIALLY_PAID">Partiellement payées</option>
               <option value="PAID">Payées</option>
               <option value="CANCELLED">Annulées</option>
             </select>
@@ -281,15 +315,13 @@ export function InvoicesPage({ initialType = 'ALL' }) {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="size-8 animate-spin rounded-full border-4 border-slate-200 border-t-cyan-700" />
-          </div>
+          <TableSkeleton columns={6} />
         ) : invoices.length === 0 ? (
           <EmptyState
             Icon={FileText}
             title="Aucune facture"
             description="Générez votre première facture depuis un mouvement de vente (Sortie)."
-            actionLabel="Générer une facture"
+            actionLabel={canWriteBilling ? 'Générer une facture' : undefined}
             onAction={() => openGenerate()}
           />
         ) : (
@@ -353,17 +385,17 @@ export function InvoicesPage({ initialType = 'ALL' }) {
                           >
                             <Eye className="size-3.5" />
                           </button>
-                          {/* Marquer payée */}
-                          {inv.status === 'PENDING' && inv.invoice_type !== 'CREDIT_NOTE' && (
+                          {/* Règlements (total, partiel, historique) */}
+                          {inv.invoice_type === 'SALE' && inv.status !== 'CANCELLED' && (
                             <button
                               type="button"
-                              title="Marquer comme payée"
-                              aria-label={`Marquer la facture ${inv.reference} comme payée`}
-                              onClick={() => handleStatusUpdate(inv, 'PAID')}
+                              title={inv.status === 'PAID' ? 'Voir les règlements' : 'Enregistrer un règlement'}
+                              aria-label={`Règlements de la facture ${inv.reference}`}
+                              onClick={() => setPaymentInvoice(inv)}
                               disabled={isLoading}
                               className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-40"
                             >
-                              <CheckCircle2 className="size-3.5" />
+                              <Wallet className="size-3.5" />
                             </button>
                           )}
                           {/* Émettre un avoir */}
@@ -371,6 +403,7 @@ export function InvoicesPage({ initialType = 'ALL' }) {
                             <button
                               type="button"
                               title="Émettre un avoir"
+                              hidden={!canWriteBilling}
                               aria-label={`Émettre un avoir sur la facture ${inv.reference}`}
                               onClick={() => handleCreditNote(inv)}
                               disabled={isLoading}
@@ -379,11 +412,12 @@ export function InvoicesPage({ initialType = 'ALL' }) {
                               <RotateCcw className="size-3.5" />
                             </button>
                           )}
-                          {/* Annuler */}
-                          {inv.status === 'PENDING' && (
+                          {/* Annuler (seulement sans règlement) */}
+                          {inv.status === 'PENDING' && !(inv.amount_paid > 0) && (
                             <button
                               type="button"
                               title="Annuler la facture"
+                              hidden={!canWriteBilling}
                               aria-label={`Annuler la facture ${inv.reference}`}
                               onClick={() => handleStatusUpdate(inv, 'CANCELLED')}
                               disabled={isLoading}
@@ -402,6 +436,15 @@ export function InvoicesPage({ initialType = 'ALL' }) {
           </div>
         )}
       </section>
+
+      <AccountantExportModal open={exportOpen} onClose={() => setExportOpen(false)} />
+
+      <PaymentModal
+        invoice={paymentInvoice}
+        open={!!paymentInvoice}
+        onClose={() => setPaymentInvoice(null)}
+        onChanged={load}
+      />
 
       <GenerateInvoiceModal
         open={generateOpen}
