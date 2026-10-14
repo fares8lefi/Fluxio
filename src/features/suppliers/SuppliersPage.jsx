@@ -1,13 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Truck, Plus, Pencil, ToggleLeft, ToggleRight, ArrowLeftRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { TableSkeleton } from '@/components/ui/Skeleton';
+import { useToast } from '@/components/ui/Toast';
 import { SupplierForm } from './SupplierForm';
 import { PartnerMovementsModal } from '@/features/movements/PartnerMovementsModal';
 import { getSuppliers, createSupplier, updateSupplier, toggleSupplier } from '@/services/supplierService';
 
 export function SuppliersPage() {
+  const { can } = useAuth();
+  const canWrite = can('stock.write');
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState(null);
@@ -33,6 +38,7 @@ export function SuppliersPage() {
   const openCreate = () => { setEditing(null); setModalOpen(true); };
   const openEdit   = (s) => { setEditing(s); setModalOpen(true); };
   const closeModal = () => setModalOpen(false);
+  const toast = useToast();
 
   const handleSubmit = async (payload) => {
     if (editing) {
@@ -41,12 +47,18 @@ export function SuppliersPage() {
       await createSupplier(payload);
     }
     closeModal();
+    toast.success(editing ? 'Fournisseur mis à jour' : 'Fournisseur créé');
     load();
   };
 
   const handleToggle = async (s) => {
-    await toggleSupplier(s.id, !s.is_active);
-    load();
+    try {
+      await toggleSupplier(s.id, !s.is_active);
+      toast.success(s.is_active ? 'Fournisseur désactivé' : 'Fournisseur activé');
+      load();
+    } catch (err) {
+      toast.error(err.message || 'Impossible de modifier le statut');
+    }
   };
 
   return (
@@ -59,7 +71,7 @@ export function SuppliersPage() {
             {suppliers.length} fournisseur{suppliers.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <Button className="rounded-xl" onClick={openCreate}>
+        <Button className="rounded-xl" onClick={openCreate} hidden={!canWrite}>
           <Plus className="mr-2 size-4" /> Nouveau fournisseur
         </Button>
       </div>
@@ -73,15 +85,13 @@ export function SuppliersPage() {
 
       {/* Table */}
       {loading ? (
-        <div className="flex justify-center py-20">
-          <div className="size-8 animate-spin rounded-full border-4 border-slate-200 border-t-cyan-700" />
-        </div>
+        <TableSkeleton columns={4} />
       ) : suppliers.length === 0 ? (
         <EmptyState
           Icon={Truck}
           title="Aucun fournisseur"
           description="Ajoutez vos fournisseurs pour les associer à vos produits."
-          actionLabel="Nouveau fournisseur"
+          actionLabel={canWrite ? 'Nouveau fournisseur' : undefined}
           onAction={openCreate}
         />
       ) : (
@@ -123,6 +133,7 @@ export function SuppliersPage() {
                         <ArrowLeftRight className="size-3.5" />
                       </button>
                       <button
+                        hidden={!canWrite}
                         title="Modifier"
                         onClick={() => openEdit(s)}
                         className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
@@ -130,6 +141,7 @@ export function SuppliersPage() {
                         <Pencil className="size-3.5" />
                       </button>
                       <button
+                        hidden={!canWrite}
                         title={s.is_active ? 'Désactiver' : 'Activer'}
                         onClick={() => handleToggle(s)}
                         className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
