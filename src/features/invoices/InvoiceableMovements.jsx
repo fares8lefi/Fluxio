@@ -1,3 +1,4 @@
+import { Spinner } from '@/components/ui/Spinner';
 import { AlertTriangle, CheckCircle2, Receipt, FileCheck2, RotateCcw } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 
@@ -95,7 +96,7 @@ export function InvoiceableMovementsTable({
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="size-8 animate-spin rounded-full border-4 border-slate-200 border-t-cyan-700" />
+        <Spinner size="md" />
       </div>
     );
   }
@@ -215,7 +216,7 @@ export function InvoiceableMovementPicker({ movements, loading, selectedId, onSe
   if (loading) {
     return (
       <div className="flex justify-center py-8">
-        <div className="size-6 animate-spin rounded-full border-4 border-slate-200 border-t-cyan-700" />
+        <Spinner size="sm" />
       </div>
     );
   }
