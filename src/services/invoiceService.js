@@ -73,3 +73,23 @@ export const getAllQuotes = async (filters = {}) => {
 /** Met à jour le statut d'un devis */
 export const updateQuoteStatus = (id, status) =>
   request(`${QUOTE_BASE}/updateStatus/${id}`, { status }, 'PUT');
+
+/**
+ * Convertit un devis accepté en facture (crée aussi la sortie de stock)
+ * @param {string} id
+ * @param {{ attestation_ref?, purchase_order_ref?, apply_rs?, rs_rate? }} [options]
+ */
+export const convertQuoteToInvoice = (id, options = {}) =>
+  request(`${QUOTE_BASE}/${id}/convert`, options, 'POST');
+
+// ── Règlements ──────────────────────────────────────────────────────────────
+
+/** Règlements d'une facture + reste à payer */
+export const getInvoicePayments = (id) => request(`${BASE}/${id}/payments`);
+
+/** Enregistre un règlement : { amount, method, date, reference? } */
+export const addInvoicePayment = (id, payload) => request(`${BASE}/${id}/payments`, payload, 'POST');
+
+/** Supprime un règlement saisi par erreur */
+export const deleteInvoicePayment = (paymentId) =>
+  request(`${BASE}/payments/${paymentId}`, undefined, 'DELETE');
