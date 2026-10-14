@@ -72,3 +72,11 @@ export const getMouvmentsBySupplier = (supplierId) =>
  */
 export const cancelMouvment = (id) =>
   request(`${BASE}/cancel/${id}`, undefined, 'PUT');
+
+/**
+ * Ajustement de stock (inventaire, casse, perte…)
+ * POST /api/mouvments/adjustments
+ * @param {{ reason: 'INVENTORY'|'BREAKAGE'|'LOSS'|'EXPIRED'|'OTHER', note?: string, counts: { productId: string, counted: number }[] }} payload
+ */
+export const adjustStock = (payload) =>
+  request(`${BASE}/adjustments`, payload, 'POST');
