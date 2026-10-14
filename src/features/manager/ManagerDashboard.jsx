@@ -126,7 +126,7 @@ export function ManagerDashboard() {
       <footer className="rounded-xl border border-dashed bg-white/60 p-4 text-[11px] text-slate-500">
         <p className="font-semibold text-slate-600">Limites connues des indicateurs</p>
         <ul className="mt-1 list-disc space-y-0.5 pl-4">
-          <li>La marge est estimée sur le prix d'achat actuel : le prix d'achat n'est pas figé dans les lignes de vente.</li>
+          <li>La marge utilise le prix d'achat figé au moment de chaque vente (ventes antérieures au 14/10/2026 : prix d'achat à cette date).</li>
           <li>Les « nouveaux clients » correspondent aux clients dont le premier mouvement tombe dans la période (pas de date de création en base).</li>
           <li>Les factures annulées et les mouvements annulés sont exclus de tous les montants.</li>
         </ul>
