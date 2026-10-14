@@ -245,6 +245,7 @@ export function GenerateInvoiceModal({
       open={open}
       title="Générer une facture de vente"
       onClose={onClose}
+      size="xl"
       footer={
         <div className="flex w-full items-center justify-between gap-3">
           <p className="text-[11px] text-slate-500">
@@ -269,7 +270,7 @@ export function GenerateInvoiceModal({
       <form
         id="invoice-form"
         onSubmit={handleSubmit}
-        className="max-h-[65vh] space-y-4 overflow-y-auto pr-1"
+        className="space-y-4"
       >
         {error && (
           <div
