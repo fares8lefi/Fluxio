@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   ArrowLeftRight,
   ArrowDownLeft,
@@ -13,8 +14,12 @@ import {
   PackageCheck,
   Clock,
   Receipt,
+  ClipboardCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { TableSkeleton } from '@/components/ui/Skeleton';
+import { useToast } from '@/components/ui/Toast';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { MovementForm } from './MovementForm';
@@ -59,6 +64,13 @@ const TYPE_CONFIG = {
     variant: 'info',
     icon: RotateCcw,
     badgeClass: 'bg-cyan-100 text-cyan-800',
+  },
+  ADJUSTMENT: {
+    label: 'Ajustement',
+    fullLabel: 'Ajustement de stock',
+    variant: 'alert',
+    icon: ClipboardCheck,
+    badgeClass: 'bg-violet-100 text-violet-800',
   },
 };
 
@@ -163,6 +175,7 @@ function MovementTabs({ currentType }) {
 /* ────────────────────── HeroBanner ────────────────────────────── */
 
 function HeroBanner({ typeCfg, onNew }) {
+  const { can } = useAuth();
   const { Icon } = typeCfg;
   return (
     <div
@@ -188,6 +201,7 @@ function HeroBanner({ typeCfg, onNew }) {
         </div>
         <Button
           onClick={onNew}
+          hidden={!can('stock.write')}
           className="shrink-0 rounded-xl bg-white/20 text-white backdrop-blur hover:bg-white/30"
         >
           <Plus className="mr-2 size-4" />
@@ -278,6 +292,8 @@ function StatsCards({ movements, count, typeFilter }) {
  * @param {string|null} typeFilter  — null = all, 'IN' | 'OUT' | 'RETURN_SUPPLIER' | 'RETURN_CLIENT'
  */
 function MovementTypeView({ typeFilter }) {
+  const { can } = useAuth();
+  const canWriteStock = can('stock.write');
   const typeCfg = TYPE_PAGES[typeFilter] ?? TYPE_PAGES[null];
 
   const [movements, setMovements]         = useState([]);
@@ -348,26 +364,34 @@ function MovementTypeView({ typeFilter }) {
   useEffect(() => { setPage(1); }, [typeFilter]);
 
   /* ── Actions ── */
+  const toast   = useToast();
+  const confirm = useConfirm();
+
   const handleCreate = async (payload) => {
     await createMouvment(payload);
+    toast.success('Mouvement enregistré', { description: 'Le stock a été mis à jour.' });
     loadMovements();
     loadReferences();
   };
 
   const handleCancelMovement = async (mvt) => {
-    if (
-      !window.confirm(
-        `Annuler le mouvement "${mvt.reference || mvt.id}" ?\nLes quantités des articles seront automatiquement réajustées en stock.`
-      )
-    ) return;
+    const ok = await confirm({
+      title: 'Annuler le mouvement',
+      description: `Le mouvement « ${mvt.reference || mvt.id} » sera annulé.\nLes quantités des articles seront automatiquement réajustées en stock.`,
+      confirmLabel: 'Annuler le mouvement',
+      cancelLabel: 'Retour',
+      destructive: true,
+    });
+    if (!ok) return;
 
     try {
       await cancelMouvment(mvt.id);
       setSelectedMovement(null);
+      toast.success('Mouvement annulé', { description: 'Le stock a été réajusté.' });
       loadMovements();
       loadReferences();
     } catch (err) {
-      alert(err.message || "Erreur lors de l'annulation du mouvement");
+      toast.error(err.message || "Erreur lors de l'annulation du mouvement");
     }
   };
 
@@ -490,9 +514,7 @@ function MovementTypeView({ typeFilter }) {
 
       {/* Table */}
       {loading ? (
-        <div className="flex justify-center py-20">
-          <div className="size-8 animate-spin rounded-full border-4 border-slate-200 border-t-cyan-700" />
-        </div>
+        <TableSkeleton columns={6} />
       ) : movements.length === 0 ? (
         <EmptyState
           Icon={typeCfg.Icon}
@@ -502,7 +524,7 @@ function MovementTypeView({ typeFilter }) {
               ? 'Aucun mouvement ne correspond aux filtres appliqués.'
               : 'Enregistrez votre première entrée ou sortie pour commencer à suivre votre stock en temps réel.'
           }
-          actionLabel={hasActiveFilters ? undefined : 'Nouveau mouvement'}
+          actionLabel={hasActiveFilters || !canWriteStock ? undefined : 'Nouveau mouvement'}
           onAction={hasActiveFilters ? undefined : () => setCreateModalOpen(true)}
         />
       ) : (
@@ -624,6 +646,7 @@ function MovementTypeView({ typeFilter }) {
                             <button
                               type="button"
                               title="Générer une facture"
+                              hidden={!can('billing.write')}
                               onClick={() => setInvoiceMovementId(m.id)}
                               className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-cyan-50 hover:text-cyan-700"
                             >
@@ -682,7 +705,7 @@ function MovementTypeView({ typeFilter }) {
       )}
 
       {/* Floating action button (type-specific pages) */}
-      {typeFilter !== null && (
+      {typeFilter !== null && canWriteStock && (
         <button
           type="button"
           onClick={() => setCreateModalOpen(true)}
@@ -710,7 +733,7 @@ function MovementTypeView({ typeFilter }) {
         movement={selectedMovement}
         open={Boolean(selectedMovement)}
         onClose={() => setSelectedMovement(null)}
-        onCancelMovement={handleCancelMovement}
+        onCancelMovement={canWriteStock ? handleCancelMovement : undefined}
       />
 
       {/* Invoice generation modal for OUT movements */}
