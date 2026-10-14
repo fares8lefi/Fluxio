@@ -75,6 +75,7 @@ export function ProductForm({ open, product, categories, suppliers, onSubmit, on
       open={open}
       title={isEdit ? 'Modifier le produit' : 'Nouveau produit'}
       onClose={onClose}
+      size="xl"
       footer={
         <>
           <Button variant="outline" type="button" onClick={onClose} disabled={isSubmitting}>
@@ -86,155 +87,161 @@ export function ProductForm({ open, product, categories, suppliers, onSubmit, on
         </>
       }
     >
-      <form id="product-form" onSubmit={submit} className="space-y-5 max-h-[65vh] overflow-y-auto pr-1">
-        {/* Identifiants */}
-        <fieldset className="space-y-4">
-          <legend className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Identification
-          </legend>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={LABEL_CLS}>Code *</label>
-              <input
-                type="number"
-                {...register('code', { required: 'Requis' })}
-                className={FIELD_CLS}
-                placeholder="Ex : 1001"
-              />
-              {errors.code && <p className="mt-1 text-xs text-rose-500">{errors.code.message}</p>}
-            </div>
-            <div>
-              <label className={LABEL_CLS}>Code-barres *</label>
-              <input
-                type="number"
-                {...register('barcode', { required: 'Requis' })}
-                className={FIELD_CLS}
-                placeholder="Ex : 3012345678901"
-              />
-              {errors.barcode && <p className="mt-1 text-xs text-rose-500">{errors.barcode.message}</p>}
-            </div>
-          </div>
-          <div>
-            <label className={LABEL_CLS}>Nom *</label>
-            <input
-              {...register('name', { required: 'Le nom est requis' })}
-              className={FIELD_CLS}
-              placeholder="Ex : Câble USB-C 2m"
-            />
-            {errors.name && <p className="mt-1 text-xs text-rose-500">{errors.name.message}</p>}
-          </div>
-        </fieldset>
+      <form id="product-form" onSubmit={submit} className="space-y-0">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
 
-        {/* Classification */}
-        <fieldset className="space-y-4">
-          <legend className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Classification
-          </legend>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={LABEL_CLS}>Catégorie</label>
-              <select {...register('categoryId')} className={FIELD_CLS}>
-                <option value="">— Aucune —</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className={LABEL_CLS}>Fournisseur</label>
-              <select {...register('supplierId')} className={FIELD_CLS}>
-                <option value="">— Aucun —</option>
-                {suppliers.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={LABEL_CLS}>Unité de mesure</label>
-              <input
-                {...register('unit_of_measure')}
-                className={FIELD_CLS}
-                placeholder="pièce, kg, litre…"
-              />
-            </div>
-            <div>
-              <label className={LABEL_CLS}>TVA</label>
-              <select {...register('tva_rate')} className={FIELD_CLS}>
-                {TVA_OPTIONS.map((v) => (
-                  <option key={v} value={v}>{v}%</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </fieldset>
+          {/* ── Colonne gauche ── */}
+          <div className="space-y-5">
+            {/* Identification */}
+            <fieldset className="space-y-4">
+              <legend className="text-xs font-semibold uppercase tracking-widest text-slate-400 pb-1 border-b border-slate-100 w-full">
+                Identification
+              </legend>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={LABEL_CLS}>Code *</label>
+                  <input
+                    type="number"
+                    {...register('code', { required: 'Requis' })}
+                    className={FIELD_CLS}
+                    placeholder="Ex : 1001"
+                  />
+                  {errors.code && <p className="mt-1 text-xs text-rose-500">{errors.code.message}</p>}
+                </div>
+                <div>
+                  <label className={LABEL_CLS}>Code-barres *</label>
+                  <input
+                    type="number"
+                    {...register('barcode', { required: 'Requis' })}
+                    className={FIELD_CLS}
+                    placeholder="Ex : 3012345678901"
+                  />
+                  {errors.barcode && <p className="mt-1 text-xs text-rose-500">{errors.barcode.message}</p>}
+                </div>
+              </div>
+              <div>
+                <label className={LABEL_CLS}>Nom du produit *</label>
+                <input
+                  {...register('name', { required: 'Le nom est requis' })}
+                  className={FIELD_CLS}
+                  placeholder="Ex : Câble USB-C 2m"
+                />
+                {errors.name && <p className="mt-1 text-xs text-rose-500">{errors.name.message}</p>}
+              </div>
+            </fieldset>
 
-        {/* Prix */}
-        <fieldset className="space-y-4">
-          <legend className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Prix
-          </legend>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={LABEL_CLS}>Prix d'achat *</label>
-              <input
-                type="number"
-                step="0.001"
-                {...register('purchase_price', { required: 'Requis', min: 0 })}
-                className={FIELD_CLS}
-                placeholder="0.000"
-              />
-              {errors.purchase_price && <p className="mt-1 text-xs text-rose-500">{errors.purchase_price.message}</p>}
-            </div>
-            <div>
-              <label className={LABEL_CLS}>Prix de vente *</label>
-              <input
-                type="number"
-                step="0.001"
-                {...register('selling_price', { required: 'Requis', min: 0 })}
-                className={FIELD_CLS}
-                placeholder="0.000"
-              />
-              {errors.selling_price && <p className="mt-1 text-xs text-rose-500">{errors.selling_price.message}</p>}
-            </div>
+            {/* Classification */}
+            <fieldset className="space-y-4">
+              <legend className="text-xs font-semibold uppercase tracking-widest text-slate-400 pb-1 border-b border-slate-100 w-full">
+                Classification
+              </legend>
+              <div>
+                <label className={LABEL_CLS}>Catégorie</label>
+                <select {...register('categoryId')} className={FIELD_CLS}>
+                  <option value="">— Aucune —</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className={LABEL_CLS}>Fournisseur</label>
+                <select {...register('supplierId')} className={FIELD_CLS}>
+                  <option value="">— Aucun —</option>
+                  {suppliers.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={LABEL_CLS}>Unité de mesure</label>
+                  <input
+                    {...register('unit_of_measure')}
+                    className={FIELD_CLS}
+                    placeholder="pièce, kg, litre…"
+                  />
+                </div>
+                <div>
+                  <label className={LABEL_CLS}>TVA</label>
+                  <select {...register('tva_rate')} className={FIELD_CLS}>
+                    {TVA_OPTIONS.map((v) => (
+                      <option key={v} value={v}>{v}%</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </fieldset>
           </div>
-        </fieldset>
 
-        {/* Stock */}
-        <fieldset className="space-y-4">
-          <legend className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Stock
-          </legend>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className={LABEL_CLS}>Qté actuelle</label>
-              <input
-                type="number"
-                {...register('stock_quantity', { min: 0 })}
-                className={FIELD_CLS}
-              />
-            </div>
-            <div>
-              <label className={LABEL_CLS}>Seuil min *</label>
-              <input
-                type="number"
-                {...register('stock_min', { required: 'Requis', min: 0 })}
-                className={FIELD_CLS}
-              />
-              {errors.stock_min && <p className="mt-1 text-xs text-rose-500">{errors.stock_min.message}</p>}
-            </div>
-            <div>
-              <label className={LABEL_CLS}>Seuil max</label>
-              <input
-                type="number"
-                {...register('stock_max', { min: 0 })}
-                className={FIELD_CLS}
-                placeholder="Illimité"
-              />
-            </div>
+          {/* ── Colonne droite ── */}
+          <div className="space-y-5">
+            {/* Prix */}
+            <fieldset className="space-y-4">
+              <legend className="text-xs font-semibold uppercase tracking-widest text-slate-400 pb-1 border-b border-slate-100 w-full">
+                Prix (TND)
+              </legend>
+              <div>
+                <label className={LABEL_CLS}>Prix d'achat HT *</label>
+                <input
+                  type="number"
+                  step="0.001"
+                  {...register('purchase_price', { required: 'Requis', min: 0 })}
+                  className={FIELD_CLS}
+                  placeholder="0.000"
+                />
+                {errors.purchase_price && <p className="mt-1 text-xs text-rose-500">{errors.purchase_price.message}</p>}
+              </div>
+              <div>
+                <label className={LABEL_CLS}>Prix de vente HT *</label>
+                <input
+                  type="number"
+                  step="0.001"
+                  {...register('selling_price', { required: 'Requis', min: 0 })}
+                  className={FIELD_CLS}
+                  placeholder="0.000"
+                />
+                {errors.selling_price && <p className="mt-1 text-xs text-rose-500">{errors.selling_price.message}</p>}
+              </div>
+            </fieldset>
+
+            {/* Stock */}
+            <fieldset className="space-y-4">
+              <legend className="text-xs font-semibold uppercase tracking-widest text-slate-400 pb-1 border-b border-slate-100 w-full">
+                Gestion du stock
+              </legend>
+              <div>
+                <label className={LABEL_CLS}>Quantité actuelle</label>
+                <input
+                  type="number"
+                  {...register('stock_quantity', { min: 0 })}
+                  className={FIELD_CLS}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={LABEL_CLS}>Seuil min *</label>
+                  <input
+                    type="number"
+                    {...register('stock_min', { required: 'Requis', min: 0 })}
+                    className={FIELD_CLS}
+                  />
+                  {errors.stock_min && <p className="mt-1 text-xs text-rose-500">{errors.stock_min.message}</p>}
+                </div>
+                <div>
+                  <label className={LABEL_CLS}>Seuil max</label>
+                  <input
+                    type="number"
+                    {...register('stock_max', { min: 0 })}
+                    className={FIELD_CLS}
+                    placeholder="Illimité"
+                  />
+                </div>
+              </div>
+            </fieldset>
           </div>
-        </fieldset>
+
+        </div>
       </form>
     </Modal>
   );
