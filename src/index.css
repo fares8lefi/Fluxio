@@ -25,7 +25,8 @@
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  /* Brand: cyan-700, same as the logo and the active sidebar item */
+  --primary: oklch(0.52 0.105 223.128);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -36,14 +37,14 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: oklch(0.609 0.126 221.723); /* cyan-600 */
   --radius: 0.625rem;
 }
 
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
+  --primary: oklch(0.789 0.154 211.53); /* cyan-400: legible on dark */
   --primary-foreground: oklch(0.205 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
@@ -53,7 +54,7 @@
   --accent-foreground: oklch(0.985 0 0);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: oklch(0.715 0.143 215.221); /* cyan-500 */
 }
 
 @layer base {
@@ -63,4 +64,53 @@
   body {
     @apply bg-background text-foreground min-h-screen font-sans antialiased;
   }
+}
+
+/* ── Motion ───────────────────────────────────────────────────────────── */
+/* Component animations live in JS (motion/react, presets in src/lib/motion.js).
+   CSS keeps only what is cheaper here: the skeleton shimmer. */
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-spin { animation-duration: 2s; }
+}
+
+/* ── Impression des documents (voir PrintPreviewModal) ───────────────────── */
+.print-only { display: none; }
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+    @bottom-right {
+      content: "Page " counter(page) " / " counter(pages);
+      font: 8pt Arial, sans-serif;
+      color: #555;
+    }
+  }
+  html, body { background: #fff !important; }
+  body { overflow: visible !important; }
+  #root { display: none !important; }
+  .print-only { display: block !important; }
+  .fiscal-doc { width: 100%; }
+  .fiscal-doc * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .fiscal-lines thead { display: table-header-group; }
+  .break-inside-avoid { break-inside: avoid; }
+}
+
+/* ── Skeleton shimmer (remplace le clignotement animate-pulse) ─────────── */
+.skeleton-shimmer { position: relative; overflow: hidden; }
+.skeleton-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.65), transparent);
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer::after { animation: none; }
 }
