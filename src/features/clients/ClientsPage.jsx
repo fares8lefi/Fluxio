@@ -3,6 +3,12 @@ import { Users, Plus, Pencil, ToggleLeft, ToggleRight, Trash2, ArrowLeftRight } 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ExportButton } from '@/components/ui/ExportButton';
+import { exportClients } from '@/services/exportService';
+import { TableSkeleton } from '@/components/ui/Skeleton';
+import { Spinner } from '@/components/ui/Spinner';
+import { useToast } from '@/components/ui/Toast';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
 import { ClientForm } from './ClientForm';
 import { PartnerMovementsModal } from '@/features/movements/PartnerMovementsModal';
 import {
@@ -20,6 +26,8 @@ export function ClientsPage() {
   const [editing, setEditing]     = useState(null);
   const [deleting, setDeleting]   = useState(null); // id en cours de suppression
   const [movementsPartner, setMovementsPartner] = useState(null);
+  const toast   = useToast();
+  const confirm = useConfirm();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -47,17 +55,25 @@ export function ClientsPage() {
       await createClient(payload);
     }
     closeModal();
+    toast.success(editing ? 'Client mis à jour' : 'Client créé');
     load();
   };
 
   const handleDelete = async (c) => {
-    if (!window.confirm(`Supprimer le client « ${c.name} » ? Cette action est irréversible.`)) return;
+    const ok = await confirm({
+      title: 'Supprimer le client',
+      description: `« ${c.name} » sera définitivement supprimé. Cette action est irréversible.`,
+      confirmLabel: 'Supprimer',
+      destructive: true,
+    });
+    if (!ok) return;
     setDeleting(c.id);
     try {
       await deleteClient(c.id);
+      toast.success('Client supprimé');
       load();
     } catch (e) {
-      setError(e.message);
+      toast.error(e.message || 'Impossible de supprimer le client');
     } finally {
       setDeleting(null);
     }
@@ -73,9 +89,12 @@ export function ClientsPage() {
             {clients.length} client{clients.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <Button className="rounded-xl" onClick={openCreate}>
-          <Plus className="mr-2 size-4" /> Nouveau client
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <ExportButton onExport={exportClients} />
+          <Button className="rounded-xl" onClick={openCreate}>
+            <Plus className="mr-2 size-4" /> Nouveau client
+          </Button>
+        </div>
       </div>
 
       {/* Error */}
@@ -87,9 +106,7 @@ export function ClientsPage() {
 
       {/* Table */}
       {loading ? (
-        <div className="flex justify-center py-20">
-          <div className="size-8 animate-spin rounded-full border-4 border-slate-200 border-t-cyan-700" />
-        </div>
+        <TableSkeleton />
       ) : clients.length === 0 ? (
         <EmptyState
           Icon={Users}
@@ -149,7 +166,7 @@ export function ClientsPage() {
                         className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40"
                       >
                         {deleting === c.id ? (
-                          <div className="size-3.5 animate-spin rounded-full border-2 border-slate-200 border-t-rose-500" />
+                          <Spinner size="xs" className="border-t-rose-500" label="Suppression…" />
                         ) : (
                           <Trash2 className="size-3.5" />
                         )}
