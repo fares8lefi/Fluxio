@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/Modal';
+import { isValidMatriculeFiscal } from '@/lib/fiscal';
 
 const FIELD_CLS =
   'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:opacity-50';
@@ -20,6 +21,7 @@ export function SupplierForm({ open, supplier, onSubmit, onClose }) {
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm();
 
@@ -32,16 +34,24 @@ export function SupplierForm({ open, supplier, onSubmit, onClose }) {
             email: supplier.email ?? '',
             phone: supplier.phone,
             address: supplier.address ?? '',
+            matriculeFiscale: supplier.matriculeFiscale ?? '',
           }
-        : { name: '', code: '', email: '', phone: '', address: '' }
+        : { name: '', code: '', email: '', phone: '', address: '', matriculeFiscale: '' }
     );
   }, [supplier, isEdit, reset]);
 
   const submit = handleSubmit(async (data) => {
-    await onSubmit({
-      ...data,
-      code: data.code ? Number(data.code) : undefined,
-    });
+    try {
+      await onSubmit({
+        ...data,
+        code: data.code ? Number(data.code) : undefined,
+      });
+    } catch (err) {
+      // Erreurs serveur : par champ si possible, sinon message global
+      const details = err.payload?.details ?? {};
+      Object.entries(details).forEach(([field, message]) => setError(field, { message }));
+      setError('root', { message: err.message || 'Enregistrement impossible' });
+    }
   });
 
   return (
@@ -49,6 +59,7 @@ export function SupplierForm({ open, supplier, onSubmit, onClose }) {
       open={open}
       title={isEdit ? 'Modifier le fournisseur' : 'Nouveau fournisseur'}
       onClose={onClose}
+      size="lg"
       footer={
         <>
           <Button variant="outline" type="button" onClick={onClose} disabled={isSubmitting}>
@@ -105,6 +116,24 @@ export function SupplierForm({ open, supplier, onSubmit, onClose }) {
         </div>
 
         <div>
+          <label htmlFor="supplier-mf" className={LABEL_CLS}>Matricule fiscal</label>
+          <input
+            id="supplier-mf"
+            {...register('matriculeFiscale', {
+              validate: (v) => !v || isValidMatriculeFiscal(v) || 'Format attendu : 1234567A/A/M/000',
+            })}
+            className={`${FIELD_CLS} font-mono uppercase`}
+            placeholder="1234567A/A/M/000"
+            spellCheck={false}
+          />
+          {errors.matriculeFiscale ? (
+            <p className="mt-1 text-xs text-rose-600">{errors.matriculeFiscale.message}</p>
+          ) : (
+            <p className="mt-1 text-xs text-slate-400">Affiché sur les bons de réception (facultatif).</p>
+          )}
+        </div>
+
+        <div>
           <label className={LABEL_CLS}>Adresse</label>
           <textarea
             {...register('address')}
@@ -113,6 +142,12 @@ export function SupplierForm({ open, supplier, onSubmit, onClose }) {
             placeholder="Adresse complète…"
           />
         </div>
+
+        {errors.root && (
+          <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            {errors.root.message}
+          </p>
+        )}
       </form>
     </Modal>
   );
