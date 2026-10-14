@@ -1,3 +1,4 @@
+import { Spinner } from '@/components/ui/Spinner';
 import { useState, useEffect, useMemo } from 'react';
 import {
   ResponsiveContainer,
@@ -273,7 +274,7 @@ export function StockEvolutionChart({ products = [], defaultProductId = '' }) {
       <div className="h-[310px] w-full pt-2">
         {loading ? (
           <div className="flex h-full items-center justify-center">
-            <div className="size-7 animate-spin rounded-full border-4 border-slate-200 border-t-cyan-700" />
+            <Spinner />
           </div>
         ) : error ? (
           <div className="flex h-full items-center justify-center text-xs text-rose-600">
