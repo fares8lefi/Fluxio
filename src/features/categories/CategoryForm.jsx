@@ -41,6 +41,7 @@ export function CategoryForm({ open, category, onSubmit, onClose }) {
       open={open}
       title={isEdit ? 'Modifier la catégorie' : 'Nouvelle catégorie'}
       onClose={onClose}
+      size="md"
       footer={
         <>
           <Button variant="outline" type="button" onClick={onClose} disabled={isSubmitting}>
