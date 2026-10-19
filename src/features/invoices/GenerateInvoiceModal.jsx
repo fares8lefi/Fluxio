@@ -3,6 +3,7 @@ import { AlertTriangle, Building2, FileWarning, Search, UserPlus } from 'lucide-
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/button';
 import { generateInvoice } from '@/services/invoiceService';
+import { formatTND, round3 } from '@/lib/fiscal';
 import { useInvoiceableMovements } from './use-invoiceable-movements';
 import {
   InvoiceableMovementPicker,
@@ -149,6 +150,16 @@ export function GenerateInvoiceModal({
   const needsCompletion = (movement?.readiness?.missing_fields ?? []).length > 0;
 
   const set = (key, value) => setOptions((prev) => ({ ...prev, [key]: value }));
+
+  // Aperçu de la retenue : le serveur refait le calcul, ceci ne sert qu'à l'affichage
+  const previewTtc = movement?.preview
+    ? options.is_suspended
+      ? movement.preview.total_ht
+      : movement.preview.total_ttc
+    : null;
+  const rsApplied = options.apply_rs && !options.is_suspended;
+  const previewRs = rsApplied && previewTtc !== null ? round3((previewTtc * Number(options.rs_rate)) / 100) : 0;
+  const belowRsThreshold = rsApplied && Number(options.rs_rate) === 1 && previewTtc !== null && previewTtc < 1000;
   const setClient = (key, value) => setClientForm((prev) => ({ ...prev, [key]: value }));
   const setCompany = (key, value) => setCompanyForm((prev) => ({ ...prev, [key]: value }));
 
@@ -214,7 +225,7 @@ export function GenerateInvoiceModal({
         movementId: movement.id,
         is_suspended: options.is_suspended,
         attestation_ref: options.attestation_ref,
-        apply_rs: options.apply_rs,
+        apply_rs: rsApplied,
         rs_rate: parseFloat(options.rs_rate),
         purchase_order_ref: options.purchase_order_ref,
         payment_terms: options.payment_terms,
@@ -515,7 +526,11 @@ export function GenerateInvoiceModal({
                     type="checkbox"
                     className="mt-0.5 accent-amber-600"
                     checked={options.is_suspended}
-                    onChange={(e) => set('is_suspended', e.target.checked)}
+                    onChange={(e) => {
+                      set('is_suspended', e.target.checked);
+                      // Pas de retenue sur une vente en suspension de TVA
+                      if (e.target.checked) set('apply_rs', false);
+                    }}
                   />
                   <span>
                     <span className="text-sm font-semibold text-amber-900">
@@ -579,6 +594,18 @@ export function GenerateInvoiceModal({
                         <option value={5}>5% — Services / Prestations diverses</option>
                         <option value={15}>15% — Honoraires / Professions libérales</option>
                       </select>
+                      {previewTtc !== null && (
+                        <p className="mt-2 text-xs text-indigo-900">
+                          Retenue <span className="font-semibold tabular-nums">{formatTND(previewRs)} DT</span>, net à
+                          payer <span className="font-semibold tabular-nums">{formatTND(round3(previewTtc - previewRs))} DT</span>
+                        </p>
+                      )}
+                      {belowRsThreshold && (
+                        <p role="status" className="mt-1.5 flex items-start gap-1.5 text-xs text-amber-800">
+                          <AlertTriangle className="mt-px size-3.5 shrink-0" aria-hidden="true" />
+                          Le total ({formatTND(previewTtc)} DT TTC) est sous le seuil de 1 000 DT : la retenue de 1 % ne s'applique normalement pas.
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
