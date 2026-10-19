@@ -50,10 +50,10 @@ export function CollectionChart({ collection, isLoading = false }) {
     <ChartFrame
       icon={Handshake}
       title="Recouvrement & ancienneté des impayés"
-      subtitle={`Taux d'encaissement ${formatPercent(rate)} · encours ${formatMoney(outstanding)} TND sur ${collection?.outstanding_invoice_count ?? 0} facture(s)`}
+      subtitle={`Factures de la période réglées à ${formatPercent(rate)}. Encours à ce jour : ${formatMoney(outstanding)} TND sur ${collection?.outstanding_invoice_count ?? 0} facture(s)`}
       isLoading={isLoading}
       isEmpty={!hasData}
-      emptyLabel="Aucun impayé sur cette période : tout est encaissé."
+      emptyLabel="Aucun impayé à ce jour : tout est encaissé."
       height={260}
     >
       {/* Jauge de recouvrement */}
@@ -65,7 +65,7 @@ export function CollectionChart({ collection, isLoading = false }) {
         <div
           className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-slate-100"
           role="img"
-          aria-label={`Taux de recouvrement : ${formatMoney(rate)} pour cent du montant facturé a été encaissé`}
+          aria-label={`Taux de recouvrement : ${formatMoney(rate)} pour cent du net à payer des factures de la période a été réglé`}
         >
           <div
             className="h-full rounded-full bg-emerald-500"
@@ -87,9 +87,9 @@ export function CollectionChart({ collection, isLoading = false }) {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 5, right: 10, left: -5, bottom: 0 }}>
             <CartesianGrid {...gridStroke} />
-            <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: '#cbd5e1' }} tick={axisTick} />
+            <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: '#d8dfe0' }} tick={axisTick} />
             <YAxis tickLine={false} axisLine={false} tick={axisTick} tickFormatter={formatCompact} width={52} />
-            <Tooltip content={<AgeingTooltip />} cursor={{ fill: '#f8fafc' }} />
+            <Tooltip content={<AgeingTooltip />} cursor={{ fill: '#f4f6f6' }} />
             <Bar dataKey="amount" name="Encours" radius={[6, 6, 0, 0]} maxBarSize={64}>
               {data.map((entry) => (
                 <Cell key={entry.label} fill={entry.color} />
