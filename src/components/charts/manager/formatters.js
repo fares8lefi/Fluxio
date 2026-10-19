@@ -39,17 +39,17 @@ export const truncateLabel = (value, max = 16) => {
 
 /** Palette partagée (thème clair, cf. composants/charts existants) */
 export const CHART_COLORS = {
-  cyan: '#0891b2',
+  cyan: '#136e78',
   emerald: '#059669',
   amber: '#d97706',
-  rose: '#e11d48',
-  indigo: '#4f46e5',
-  slate: '#94a3b8',
+  rose: '#b9342b',
+  indigo: '#30548d',
+  slate: '#8d9c9f',
 };
 
 /** Style d'axe commun */
-export const axisTick = { fill: '#64748b', fontSize: 11 };
-export const gridStroke = { strokeDasharray: '3 3', stroke: '#f1f5f9', vertical: false };
+export const axisTick = { fill: '#637477', fontSize: 11 };
+export const gridStroke = { strokeDasharray: '3 3', stroke: '#e9eded', vertical: false };
 
 export const moneyAxis = (formatter = formatCompact) => ({
   tickLine: false,
