@@ -11,7 +11,6 @@ import {
   ReferenceLine,
 } from 'recharts';
 import {
-  TrendingDown,
   TrendingUp,
   AlertTriangle,
   Package,
@@ -157,20 +156,13 @@ export function StockEvolutionChart({ products = [], defaultProductId = '' }) {
   }, [history, currentProduct]);
 
   return (
-    <div className="rounded-xl border bg-white p-5 shadow-sm space-y-4">
+    <div className="rounded-xl border bg-white p-5 space-y-4">
       {/* Header with Title and Filters */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b pb-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="grid size-8 place-items-center rounded-lg bg-cyan-50 text-cyan-700">
-              <TrendingDown className="size-4" />
-            </span>
-            <h3 className="font-semibold text-slate-900 text-base">
-              Courbe d'évolution du Stock Réel vs Seuil d'Alerte
-            </h3>
-          </div>
-          <p className="mt-1 text-xs text-slate-500">
-            Suivez la trajectoire du stock face au stock minimum critique pour anticiper les réapprovisionnements.
+          <h3 className="text-base font-semibold text-slate-900">Évolution du stock</h3>
+          <p className="mt-0.5 text-sm text-slate-500">
+            Le stock d'un produit jour après jour, face à son seuil d'alerte.
           </p>
         </div>
 
@@ -293,31 +285,31 @@ export function StockEvolutionChart({ products = [], defaultProductId = '' }) {
                 <linearGradient id="stockGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop
                     offset="5%"
-                    stopColor={isBelowMin ? '#f59e0b' : '#0891b2'}
+                    stopColor={isBelowMin ? '#f59e0b' : '#136e78'}
                     stopOpacity={0.35}
                   />
                   <stop
                     offset="95%"
-                    stopColor={isBelowMin ? '#f59e0b' : '#0891b2'}
+                    stopColor={isBelowMin ? '#f59e0b' : '#136e78'}
                     stopOpacity={0.02}
                   />
                 </linearGradient>
               </defs>
 
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e9eded" vertical={false} />
 
               <XAxis
                 dataKey="label"
                 tickLine={false}
-                axisLine={{ stroke: '#cbd5e1' }}
-                tick={{ fill: '#64748b', fontSize: 11 }}
+                axisLine={{ stroke: '#d8dfe0' }}
+                tick={{ fill: '#637477', fontSize: 11 }}
               />
 
               <YAxis
                 domain={[0, yDomainMax]}
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: '#64748b', fontSize: 11 }}
+                tick={{ fill: '#637477', fontSize: 11 }}
               />
 
               <Tooltip content={<CustomTooltip />} />
@@ -326,12 +318,12 @@ export function StockEvolutionChart({ products = [], defaultProductId = '' }) {
               {currentProduct?.stock_min !== undefined && (
                 <ReferenceLine
                   y={currentProduct.stock_min}
-                  stroke="#ef4444"
+                  stroke="#d2453b"
                   strokeDasharray="4 4"
                   strokeWidth={2}
                   label={{
                     value: `Alerte (${currentProduct.stock_min})`,
-                    fill: '#dc2626',
+                    fill: '#b9342b',
                     fontSize: 10,
                     position: 'insideTopRight',
                   }}
@@ -342,12 +334,12 @@ export function StockEvolutionChart({ products = [], defaultProductId = '' }) {
               {currentProduct?.stock_max && (
                 <ReferenceLine
                   y={currentProduct.stock_max}
-                  stroke="#6366f1"
+                  stroke="#3f6aa8"
                   strokeDasharray="3 3"
                   strokeWidth={1.5}
                   label={{
                     value: `Max (${currentProduct.stock_max})`,
-                    fill: '#4f46e5',
+                    fill: '#30548d',
                     fontSize: 10,
                     position: 'insideTopRight',
                   }}
@@ -358,7 +350,7 @@ export function StockEvolutionChart({ products = [], defaultProductId = '' }) {
               <Area
                 type="monotone"
                 dataKey="stockReel"
-                stroke={isBelowMin ? '#d97706' : '#0891b2'}
+                stroke={isBelowMin ? '#d97706' : '#136e78'}
                 strokeWidth={2.5}
                 fillOpacity={1}
                 fill="url(#stockGradient)"
