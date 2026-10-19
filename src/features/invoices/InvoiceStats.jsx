@@ -1,129 +1,110 @@
-import { TrendingUp, CheckCircle2, Clock, RotateCcw, ListChecks, BadgeCheck, AlertTriangle, FileCheck2 } from 'lucide-react';
+import { formatTND } from '@/lib/fiscal';
 
-const TONES = {
-  cyan:    { icon: 'bg-cyan-50 text-cyan-700',     value: 'text-slate-900' },
-  emerald: { icon: 'bg-emerald-50 text-emerald-700', value: 'text-emerald-700' },
-  amber:   { icon: 'bg-amber-50 text-amber-700',   value: 'text-amber-700' },
-  rose:    { icon: 'bg-rose-50 text-rose-700',     value: 'text-rose-700' },
-  slate:   { icon: 'bg-slate-100 text-slate-600',  value: 'text-slate-900' },
-};
-
-/**
- * Tuile d'indicateur
- * @param {LucideIcon} icon
- * @param {'cyan'|'emerald'|'amber'|'rose'|'slate'} tone
- * @param {string} label  — libellé court affiché en haut
- * @param {string|number} value
- * @param {string} [unit] — suffixe d'unité (ex : TND)
- * @param {string} [hint] — précision sous la valeur
- * @param {'sm'|'md'} size
- */
-export function StatCard({ icon: Icon, tone = 'cyan', label, value, unit, hint, size = 'md' }) {
-  const palette = TONES[tone] ?? TONES.cyan;
-
+/** Montant aligné : chiffres tabulaires, devise discrète */
+export function Money({ value, className = '', unit = true }) {
   return (
-    <div className="rounded-xl border bg-white shadow-sm">
-      <div className={`flex items-center gap-2.5 ${size === 'sm' ? 'p-3' : 'p-5 pb-3'}`}>
-        <span className={`grid shrink-0 place-items-center rounded-lg ${palette.icon} ${size === 'sm' ? 'size-8' : 'size-9'}`}>
-          <Icon className={size === 'sm' ? 'size-4' : 'size-4'} aria-hidden="true" />
-        </span>
-        <span className="truncate text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
-          {label}
-        </span>
-      </div>
-      <div className={size === 'sm' ? 'px-3 pb-3' : 'px-5 pb-4'}>
-        <p className={`font-bold tabular-nums ${palette.value} ${size === 'sm' ? 'text-lg' : 'text-xl'}`}>
-          {value}
-          {unit && <span className="ml-1 text-xs font-normal text-slate-400">{unit}</span>}
-        </p>
-        {hint && <p className="mt-0.5 text-[11px] text-slate-500">{hint}</p>}
-      </div>
-    </div>
+    <span className={`figure whitespace-nowrap ${className}`}>
+      {formatTND(value)}
+      {unit && <span className="ml-1 text-[0.8em] font-normal text-slate-400">TND</span>}
+    </span>
   );
 }
 
 /**
- * Indicateurs de facturation (montants émis / encaissés)
+ * En-tête de la facturation : une phrase sur ce qui reste à encaisser, puis
+ * la barre de règlement (encaissé / reste à encaisser) et les avoirs.
  */
-export function InvoicingStats({ totalTTC, totalPaid, totalPending, creditNoteCount }) {
+export function BillingSummary({ totalTTC, totalPaid, totalPending, openCount, creditNoteCount, loading }) {
+  const collected = totalTTC > 0 ? Math.min(100, (totalPaid / totalTTC) * 100) : 0;
+
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <StatCard
-        icon={TrendingUp}
-        tone="cyan"
-        label="Facturé"
-        value={Number(totalTTC ?? 0).toFixed(3)}
-        unit="TND"
-        hint="Total TTC émis"
-      />
-      <StatCard
-        icon={CheckCircle2}
-        tone="emerald"
-        label="Encaissé"
-        value={Number(totalPaid ?? 0).toFixed(3)}
-        unit="TND"
-        hint="Factures payées"
-      />
-      <StatCard
-        icon={Clock}
-        tone="amber"
-        label="En attente"
-        value={Number(totalPending ?? 0).toFixed(3)}
-        unit="TND"
-        hint="À encaisser"
-      />
-      <StatCard
-        icon={RotateCcw}
-        tone="rose"
-        label="Avoirs"
-        value={creditNoteCount ?? 0}
-        hint="Factures d'avoir émises"
-      />
-    </div>
+    <section aria-label="Situation des encaissements" className="space-y-5">
+      <h2 className="text-3xl leading-tight font-semibold text-slate-900 sm:text-4xl">
+        {loading ? (
+          <span className="text-slate-300">Calcul des encaissements…</span>
+        ) : totalPending > 0 ? (
+          <>
+            <Money value={totalPending} unit={false} /> TND à encaisser sur {openCount}{' '}
+            {openCount > 1 ? 'factures' : 'facture'}.
+          </>
+        ) : totalTTC > 0 ? (
+          'Toutes les factures sont réglées.'
+        ) : (
+          'Aucune facture émise pour le moment.'
+        )}
+      </h2>
+
+      {!loading && totalTTC > 0 && (
+        <div className="rounded-xl border bg-white p-5">
+          {/* Barre de règlement : la part encaissée du total facturé */}
+          <div
+            className="flex h-3 overflow-hidden rounded-full bg-amber-100"
+            role="img"
+            aria-label={`${Math.round(collected)} % du montant facturé est encaissé`}
+          >
+            <span className="bg-emerald-600 transition-[width] duration-500" style={{ width: `${collected}%` }} />
+          </div>
+
+          <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
+            <div>
+              <dt className="flex items-center gap-2 text-sm text-slate-500">
+                <span className="size-2 rounded-full bg-emerald-600" aria-hidden="true" />
+                Encaissé
+              </dt>
+              <dd className="mt-0.5 text-lg font-semibold text-slate-900">
+                <Money value={totalPaid} />
+              </dd>
+            </div>
+            <div>
+              <dt className="flex items-center gap-2 text-sm text-slate-500">
+                <span className="size-2 rounded-full bg-amber-400" aria-hidden="true" />
+                Reste à encaisser
+              </dt>
+              <dd className="mt-0.5 text-lg font-semibold text-slate-900">
+                <Money value={totalPending} />
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm text-slate-500">Total facturé TTC</dt>
+              <dd className="mt-0.5 text-lg font-semibold text-slate-900">
+                <Money value={totalTTC} />
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm text-slate-500">Avoirs émis</dt>
+              <dd className="figure mt-0.5 text-lg font-semibold text-slate-900">{creditNoteCount}</dd>
+            </div>
+          </dl>
+        </div>
+      )}
+    </section>
   );
 }
 
 /**
- * Indicateurs du pipeline de facturation (mouvements de type OUT)
- * @param {object} summary — { total, pending, ready, missing_info, already_invoiced }
+ * Résumé des ventes à facturer, en une ligne : combien sont prêtes,
+ * combien demandent des informations.
+ * @param {object} summary — { total, ready, missing_info, already_invoiced }
  */
-export function SalesPipelineStats({ summary }) {
-  const toFacturer = (summary?.pending ?? 0) + (summary?.already_invoiced ?? 0);
+export function SalesPipelineSummary({ summary }) {
+  const ready = summary?.ready ?? 0;
+  const missing = summary?.missing_info ?? 0;
+  const invoiced = summary?.already_invoiced ?? 0;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <StatCard
-        icon={ListChecks}
-        tone="slate"
-        label="Ventes (OUT)"
-        value={summary?.total ?? 0}
-        hint={`${toFacturer} sur cette page`}
-        size="sm"
-      />
-      <StatCard
-        icon={BadgeCheck}
-        tone="emerald"
-        label="Prêtes à facturer"
-        value={summary?.ready ?? 0}
-        hint="Informations complètes"
-        size="sm"
-      />
-      <StatCard
-        icon={AlertTriangle}
-        tone="amber"
-        label="À compléter"
-        value={summary?.missing_info ?? 0}
-        hint="Informations manquantes"
-        size="sm"
-      />
-      <StatCard
-        icon={FileCheck2}
-        tone="cyan"
-        label="Déjà facturées"
-        value={summary?.already_invoiced ?? 0}
-        hint="Facture émise"
-        size="sm"
-      />
-    </div>
+    <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
+      <span className="flex items-center gap-1.5">
+        <span className="size-2 rounded-full bg-emerald-600" aria-hidden="true" />
+        <span className="figure font-semibold text-slate-900">{ready}</span> prêtes à facturer
+      </span>
+      <span className="flex items-center gap-1.5">
+        <span className="size-2 rounded-full bg-amber-400" aria-hidden="true" />
+        <span className="figure font-semibold text-slate-900">{missing}</span> à compléter
+      </span>
+      <span className="flex items-center gap-1.5">
+        <span className="size-2 rounded-full bg-slate-300" aria-hidden="true" />
+        <span className="figure font-semibold text-slate-900">{invoiced}</span> déjà facturées
+      </span>
+    </p>
   );
 }
