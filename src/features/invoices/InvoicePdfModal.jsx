@@ -10,7 +10,7 @@ const TITLES = {
   PROFORMA: 'Facture pro forma',
 };
 
-function InvoiceDocument({ data }) {
+export function InvoiceDocument({ data }) {
   const { company, client, invoiceDetails: d, fiscalSummary: f, items } = data;
   const isCreditNote = d.invoice_type === 'CREDIT_NOTE';
 
