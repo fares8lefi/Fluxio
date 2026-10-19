@@ -18,7 +18,7 @@ function AnomalyTile({ label, value, amount, tone = 'slate' }) {
 
   return (
     <div className={`rounded-xl p-3 ${isZero ? TONES.slate : TONES[tone]}`}>
-      <p className="text-[11px] font-semibold tracking-wide text-slate-500 uppercase">{label}</p>
+      <p className="text-[11px] font-semibold text-slate-500">{label}</p>
       <p className={`mt-1 text-lg font-bold tabular-nums ${isZero ? 'text-slate-400' : 'text-slate-900'}`}>
         {formatInt(value)}
       </p>
@@ -112,7 +112,7 @@ export function ManagerStockBlock({ block, onRetry }) {
               label="Couverture"
               value={formatInt(data?.coverage_days)}
               unit="j"
-              hint="Stock total / vente journalière (30 j)"
+              hint="Valeur du stock / coût moyen des sorties par jour (30 j)"
             />
           </div>
 
@@ -142,7 +142,7 @@ export function ManagerStockBlock({ block, onRetry }) {
               label="Retours fournisseurs"
               value={formatMoney(data?.returns?.supplier_total)}
               unit="TND"
-              hint={`${formatInt(data?.returns?.supplier_count)} retour(s)`}
+              hint={`${formatInt(data?.returns?.supplier_count)} retour(s), ${formatPercent(data?.returns?.supplier_return_rate_pct)} des achats`}
             />
             <StatCard
               icon={RotateCcw}
@@ -151,7 +151,7 @@ export function ManagerStockBlock({ block, onRetry }) {
               label="Retours clients"
               value={formatMoney(data?.returns?.client_total)}
               unit="TND"
-              hint={`Taux de retour global : ${formatPercent(data?.returns?.return_rate_pct)}`}
+              hint={`${formatPercent(data?.returns?.return_rate_pct)} des ventes facturées`}
             />
           </div>
 
@@ -169,7 +169,7 @@ export function ManagerStockBlock({ block, onRetry }) {
                   amount={anomalies?.never_sold_amount}
                   tone="amber"
                 />
-                <AnomalyTile label="Marge < 10 %" value={anomalies?.low_margin_count} tone="amber" />
+                <AnomalyTile label="Prix à moins de 10 % de marge" value={anomalies?.low_margin_count} tone="amber" />
               </div>
             </div>
 
