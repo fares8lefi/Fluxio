@@ -148,7 +148,7 @@ export function PaymentModal({ invoice, open, onClose, onChanged }) {
 
           {/* Historique */}
           <section>
-            <h3 className="mb-2 text-xs font-semibold tracking-wider text-slate-500 uppercase">Historique</h3>
+            <h3 className="mb-2 text-xs font-semibold text-slate-500">Historique</h3>
             {data.payments.length === 0 ? (
               <p className="rounded-lg border border-dashed px-4 py-3 text-sm text-slate-500">
                 {summary.amount_paid > 0
