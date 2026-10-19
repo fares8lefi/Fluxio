@@ -15,7 +15,7 @@ import { Filter, CheckCircle2 } from 'lucide-react';
 const STATUS = {
   ok: '#059669', // Emerald — stock au-dessus du seuil
   alert: '#f59e0b', // Amber — sous le seuil d'alerte
-  rupture: '#e11d48', // Rose — rupture (stock ≤ 0)
+  rupture: '#b9342b', // Rose — rupture (stock ≤ 0)
 };
 
 /** Couleur du point selon l'état du stock (jamais la couleur seule : la ligne
@@ -107,14 +107,14 @@ export function StockAlertsLineChart({ products = [] }) {
   }, [chartData]);
 
   return (
-    <div className="space-y-4 rounded-xl border bg-white p-5 shadow-sm">
+    <div className="space-y-4 rounded-xl border bg-white p-5">
       <div className="flex flex-col gap-2 border-b pb-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-base font-semibold text-slate-900">
-            Courbes par produit : Stock Réel vs Seuil Minimum
+            Stock et seuil, produit par produit
           </h3>
-          <p className="mt-0.5 text-xs text-slate-500">
-            Trajectoire du stock en rayon face au seuil d'alerte configuré, produit par produit.
+          <p className="mt-0.5 text-sm text-slate-500">
+            Chaque point est un produit : sous la ligne pointillée, il faut commander.
           </p>
         </div>
 
@@ -141,13 +141,13 @@ export function StockAlertsLineChart({ products = [] }) {
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 10, right: 15, left: -15, bottom: 30 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e9eded" vertical={false} />
 
               <XAxis
                 dataKey="shortName"
                 tickLine={false}
-                axisLine={{ stroke: '#cbd5e1' }}
-                tick={{ fill: '#475569', fontSize: 11 }}
+                axisLine={{ stroke: '#d8dfe0' }}
+                tick={{ fill: '#4a5a5e', fontSize: 11 }}
                 interval={0}
                 angle={-20}
                 textAnchor="end"
@@ -157,10 +157,10 @@ export function StockAlertsLineChart({ products = [] }) {
                 domain={yDomain}
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: '#64748b', fontSize: 11 }}
+                tick={{ fill: '#637477', fontSize: 11 }}
                 allowDecimals={false}
               />
-              <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#cbd5e1', strokeDasharray: '3 3' }} />
+              <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#d8dfe0', strokeDasharray: '3 3' }} />
               <Legend
                 verticalAlign="top"
                 align="right"
@@ -173,10 +173,10 @@ export function StockAlertsLineChart({ products = [] }) {
                 type="stepAfter"
                 dataKey="alertThreshold"
                 name="Seuil d'Alerte (Min)"
-                stroke="#94a3b8"
+                stroke="#8d9c9f"
                 strokeWidth={2}
                 strokeDasharray="5 4"
-                dot={{ r: 2.5, fill: '#94a3b8' }}
+                dot={{ r: 2.5, fill: '#8d9c9f' }}
                 activeDot={{ r: 4 }}
               />
 
@@ -185,7 +185,7 @@ export function StockAlertsLineChart({ products = [] }) {
                 type="monotone"
                 dataKey="stockValue"
                 name="Stock Réel"
-                stroke="#0e7490"
+                stroke="#0f5a63"
                 strokeWidth={2.5}
                 dot={(props) => {
                   const { cx, cy, index, payload } = props;
