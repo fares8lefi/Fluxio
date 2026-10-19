@@ -2,10 +2,10 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { Package, ShieldAlert, CheckCircle, AlertOctagon, Layers } from 'lucide-react';
 
 const COLORS = {
-  OPTIMAL: '#10b981',      // Emerald
+  OPTIMAL: '#1f9d6b',      // Emerald
   ALERT: '#f59e0b',        // Amber
-  OUT_OF_STOCK: '#ef4444', // Rose/Red
-  OVERSTOCK: '#6366f1',    // Indigo
+  OUT_OF_STOCK: '#d2453b', // Rose/Red
+  OVERSTOCK: '#3f6aa8',    // Indigo
 };
 
 function DonutTooltip({ active, payload }) {
@@ -77,11 +77,11 @@ export function StockHealthDonut({ summary }) {
   ].filter((d) => d.value > 0);
 
   return (
-    <div className="rounded-xl border bg-white p-5 shadow-sm space-y-4 flex flex-col justify-between">
+    <div className="rounded-xl border bg-white p-5 space-y-4 flex flex-col justify-between">
       <div className="border-b pb-3">
-        <h3 className="font-semibold text-slate-900 text-base">Santé Globale du Stock</h3>
-        <p className="text-xs text-slate-500 mt-0.5">
-          Répartition des {total} références selon leur état critique.
+        <h3 className="text-base font-semibold text-slate-900">État du stock</h3>
+        <p className="mt-0.5 text-sm text-slate-500">
+          Les {total} références, classées selon leur niveau.
         </p>
       </div>
 
@@ -114,7 +114,7 @@ export function StockHealthDonut({ summary }) {
             {/* Center label */}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-2xl font-bold text-slate-900">{total}</span>
-              <span className="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">
+              <span className="text-[10px] font-semibold text-slate-400">
                 Produits
               </span>
             </div>
