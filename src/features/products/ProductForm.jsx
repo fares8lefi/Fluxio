@@ -94,7 +94,7 @@ export function ProductForm({ open, product, categories, suppliers, onSubmit, on
           <div className="space-y-5">
             {/* Identification */}
             <fieldset className="space-y-4">
-              <legend className="text-xs font-semibold uppercase tracking-widest text-slate-400 pb-1 border-b border-slate-100 w-full">
+              <legend className="text-xs font-semibold text-slate-400 pb-1 border-b border-slate-100 w-full">
                 Identification
               </legend>
               <div className="grid grid-cols-2 gap-4">
@@ -132,7 +132,7 @@ export function ProductForm({ open, product, categories, suppliers, onSubmit, on
 
             {/* Classification */}
             <fieldset className="space-y-4">
-              <legend className="text-xs font-semibold uppercase tracking-widest text-slate-400 pb-1 border-b border-slate-100 w-full">
+              <legend className="text-xs font-semibold text-slate-400 pb-1 border-b border-slate-100 w-full">
                 Classification
               </legend>
               <div>
@@ -178,7 +178,7 @@ export function ProductForm({ open, product, categories, suppliers, onSubmit, on
           <div className="space-y-5">
             {/* Prix */}
             <fieldset className="space-y-4">
-              <legend className="text-xs font-semibold uppercase tracking-widest text-slate-400 pb-1 border-b border-slate-100 w-full">
+              <legend className="text-xs font-semibold text-slate-400 pb-1 border-b border-slate-100 w-full">
                 Prix (TND)
               </legend>
               <div>
@@ -207,7 +207,7 @@ export function ProductForm({ open, product, categories, suppliers, onSubmit, on
 
             {/* Stock */}
             <fieldset className="space-y-4">
-              <legend className="text-xs font-semibold uppercase tracking-widest text-slate-400 pb-1 border-b border-slate-100 w-full">
+              <legend className="text-xs font-semibold text-slate-400 pb-1 border-b border-slate-100 w-full">
                 Gestion du stock
               </legend>
               <div>
