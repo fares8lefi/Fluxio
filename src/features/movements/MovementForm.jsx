@@ -291,7 +291,7 @@ export function MovementForm({
               </span>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <span className="text-xs font-semibold text-slate-500">
                     Type :
                   </span>
                   <span className="text-sm font-bold text-slate-900">
@@ -313,7 +313,7 @@ export function MovementForm({
           </div>
         ) : (
           <div>
-            <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <label className="mb-1 block text-xs font-semibold text-slate-500">
               Type de mouvement *
             </label>
             <select
@@ -394,7 +394,7 @@ export function MovementForm({
         {/* 3. Lignes d'articles */}
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <label className="text-xs font-semibold text-slate-500">
               Articles à déplacer ({items.length}) *
             </label>
             <Button
