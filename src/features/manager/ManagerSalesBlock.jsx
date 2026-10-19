@@ -102,7 +102,7 @@ export function ManagerSalesBlock({ block, onRetry }) {
               label="Encaissé TTC"
               value={formatMoney(totals?.collected_ttc)}
               unit="TND"
-              hint={`Net à payer : ${formatMoney(totals?.net_payable)} TND`}
+              hint="Règlements reçus sur la période"
             />
             <StatCard
               icon={Percent}
@@ -115,7 +115,7 @@ export function ManagerSalesBlock({ block, onRetry }) {
             <StatCard
               icon={ListChecks}
               tone="amber"
-              label="Après avoirs"
+              label="Facturé net des avoirs"
               value={formatMoney(totals?.net_after_credit_notes)}
               unit="TND"
               hint={`${formatInt(totals?.credit_note_count)} avoir(s) — ${formatMoney(totals?.credit_notes_ttc)} TND`}
@@ -133,7 +133,7 @@ export function ManagerSalesBlock({ block, onRetry }) {
               <div className="border-b bg-slate-50/50 px-5 py-3">
                 <h3 className="text-sm font-semibold text-slate-900">Ventilation de la TVA par taux</h3>
                 <p className="mt-0.5 text-xs text-slate-500">
-                  Les factures suspendues (TVA 0) sont exclues de cette ventilation.
+                  Nette des avoirs. Les ventes en suspension de TVA sont sur une ligne à part.
                 </p>
               </div>
               {(data?.tva_by_rate ?? []).length === 0 ? (
@@ -142,7 +142,7 @@ export function ManagerSalesBlock({ block, onRetry }) {
                 </p>
               ) : (
                 <table className="w-full text-xs">
-                  <thead className="border-b bg-slate-50/80 font-semibold tracking-wider text-slate-500 uppercase">
+                  <thead className="border-b bg-slate-50/80 font-semibold text-slate-500">
                     <tr>
                       <th className="px-5 py-2.5 text-left">Taux</th>
                       <th className="px-5 py-2.5 text-right">Base HT</th>
@@ -151,8 +151,10 @@ export function ManagerSalesBlock({ block, onRetry }) {
                   </thead>
                   <tbody className="divide-y text-slate-700">
                     {data.tva_by_rate.map((row) => (
-                      <tr key={row.rate}>
-                        <td className="px-5 py-2.5 font-medium text-slate-900">{formatPercent(row.rate, 0)}</td>
+                      <tr key={row.suspended ? 'suspension' : row.rate}>
+                        <td className="px-5 py-2.5 font-medium text-slate-900">
+                          {row.suspended ? 'Suspension (exonérée)' : formatPercent(row.rate, 0)}
+                        </td>
                         <td className="px-5 py-2.5 text-right tabular-nums">{formatMoney(row.base_ht)}</td>
                         <td className="px-5 py-2.5 text-right font-semibold tabular-nums">{formatMoney(row.tva_amount)}</td>
                       </tr>
@@ -169,7 +171,7 @@ export function ManagerSalesBlock({ block, onRetry }) {
                   Number(totals?.suspended_ttc) > 0 ? 'border-amber-200 bg-amber-50' : 'bg-white'
                 }`}
               >
-                <p className="text-xs font-semibold text-slate-500 uppercase">Ventes en suspension de TVA</p>
+                <p className="text-xs font-semibold text-slate-500">Ventes en suspension de TVA</p>
                 <p className="mt-1 text-xl font-bold tabular-nums text-slate-900">
                   {formatMoney(totals?.suspended_ttc)} <span className="text-xs font-normal text-slate-400">TND</span>
                 </p>
@@ -183,7 +185,7 @@ export function ManagerSalesBlock({ block, onRetry }) {
                   Number(data?.not_invoiced_sales?.count) > 0 ? 'border-rose-200 bg-rose-50' : 'bg-white'
                 }`}
               >
-                <p className="text-xs font-semibold text-slate-500 uppercase">Ventes à facturer</p>
+                <p className="text-xs font-semibold text-slate-500">Ventes à facturer</p>
                 <p className="mt-1 text-xl font-bold tabular-nums text-slate-900">
                   {formatInt(data?.not_invoiced_sales?.count)}{' '}
                   <span className="text-xs font-normal text-slate-500">mouvement(s) · {formatMoney(data?.not_invoiced_sales?.amount_ht)} TND HT</span>
