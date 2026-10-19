@@ -28,7 +28,7 @@ export function PeriodFilter({
       aria-label="Période d'analyse"
     >
       <div className="space-y-2">
-        <span className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
+        <span className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
           <CalendarDays className="size-3.5" aria-hidden="true" />
           Période
         </span>
