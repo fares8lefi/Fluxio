@@ -15,10 +15,26 @@ import { PageLoader } from '@/components/ui/Spinner';
  *
  * @param {string}    title       — titre de la fenêtre d'aperçu
  * @param {string}    fileName    — nom proposé pour « Enregistrer en PDF »
- * @param {ReactNode} document    — le FiscalDocument à imprimer (null pendant le chargement)
+ * @param {ReactNode|ReactNode[]} document — le FiscalDocument à imprimer (null pendant le chargement) ;
+ *                                  un tableau imprime chaque document sur une nouvelle page
  * @param {string[]}  [issues]    — mentions manquantes, affichées mais jamais imprimées
+ * @param {ReactNode} [actions]   — boutons supplémentaires du pied, avant « Imprimer »
  */
-export function PrintPreviewModal({ open, onClose, title, fileName, document: doc, loading, error, issues = [] }) {
+export function PrintPreviewModal({
+  open,
+  onClose,
+  title,
+  fileName,
+  document: doc,
+  loading,
+  error,
+  issues = [],
+  printLabel = 'Imprimer / PDF',
+  loadingLabel = 'Chargement du document…',
+  actions = null,
+}) {
+  const docs = Array.isArray(doc) ? doc : doc ? [doc] : [];
+
   // Le titre de la page sert de nom de fichier par défaut pour « Enregistrer en PDF »
   useEffect(() => {
     if (!open || !fileName) return;
@@ -40,17 +56,20 @@ export function PrintPreviewModal({ open, onClose, title, fileName, document: do
           <Button variant="outline" className="rounded-xl" onClick={onClose}>
             <X className="mr-1 size-4" /> Fermer
           </Button>
+          <div className="flex items-center gap-2">
+          {actions}
           <Button
             onClick={() => window.print()}
-            disabled={!doc}
+            disabled={docs.length === 0}
             className="rounded-xl bg-cyan-700 text-white hover:bg-cyan-800"
           >
-            <Printer className="mr-2 size-4" /> Imprimer / PDF
+            <Printer className="mr-2 size-4" /> {printLabel}
           </Button>
+          </div>
         </div>
       }
     >
-      {loading && <PageLoader label="Chargement du document…" />}
+      {loading && <PageLoader label={loadingLabel} />}
 
       {error && (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
@@ -58,7 +77,7 @@ export function PrintPreviewModal({ open, onClose, title, fileName, document: do
         </div>
       )}
 
-      {doc && issues.length > 0 && (
+      {docs.length > 0 && issues.length > 0 && (
         <div role="alert" className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <p className="flex items-center gap-2 font-semibold">
             <AlertTriangle className="size-4 shrink-0" aria-hidden="true" />
@@ -72,15 +91,26 @@ export function PrintPreviewModal({ open, onClose, title, fileName, document: do
         </div>
       )}
 
-      {doc && (
+      {docs.length > 0 && (
         <>
-          {/* Aperçu : feuille A4 à l'échelle, défilement horizontal sur petit écran */}
-          <div className="-mx-6 overflow-x-auto bg-slate-100 px-6 py-6">
-            <div className="mx-auto w-[210mm] bg-white p-[12mm] shadow-md ring-1 ring-slate-200">
-              {doc}
-            </div>
+          {/* Aperçu : feuilles A4 à l'échelle, défilement horizontal sur petit écran */}
+          <div className="-mx-6 grid gap-6 overflow-x-auto bg-slate-100 px-6 py-6">
+            {docs.map((d, i) => (
+              <div key={i} className="mx-auto min-h-[297mm] w-[210mm] bg-white p-[12mm] shadow-md ring-1 ring-slate-200">
+                {d}
+              </div>
+            ))}
           </div>
-          {createPortal(<div className="print-only">{doc}</div>, window.document.body)}
+          {createPortal(
+            <div className="print-only">
+              {docs.map((d, i) => (
+                <div key={i} className={i > 0 ? 'break-before-page' : undefined}>
+                  {d}
+                </div>
+              ))}
+            </div>,
+            window.document.body
+          )}
         </>
       )}
     </Modal>
