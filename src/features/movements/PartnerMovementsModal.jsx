@@ -160,7 +160,7 @@ export function PartnerMovementsModal({ open, onClose, partner }) {
           ) : (
             <div className="overflow-hidden rounded-xl border bg-white">
               <table className="w-full text-xs">
-                <thead className="border-b bg-slate-50 font-semibold uppercase tracking-wider text-slate-500">
+                <thead className="border-b bg-slate-50 font-semibold text-slate-500">
                   <tr>
                     <th className="px-3.5 py-2.5 text-left">Date</th>
                     <th className="px-3.5 py-2.5 text-left">Réf.</th>
