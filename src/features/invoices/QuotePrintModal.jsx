@@ -94,7 +94,7 @@ export function QuotePrintModal({ quote, open, onClose }) {
     <PrintPreviewModal
       open={open}
       onClose={onClose}
-      title={`Aperçu — ${quote.reference}`}
+      title={`Devis ${quote.reference}`}
       fileName={quote.reference}
       issues={missingMentions({ seller, party })}
       document={doc}
