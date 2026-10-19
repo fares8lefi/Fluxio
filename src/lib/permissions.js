@@ -15,7 +15,6 @@ const RULES = {
   'billing.write': ['OWNER', 'ACCOUNTANT'],
   'finance.read': ['OWNER', 'ACCOUNTANT'],
   'company.manage': ['OWNER'],
-  'team.manage': ['OWNER'],
 };
 
 /**
@@ -24,6 +23,5 @@ const RULES = {
  */
 export function can(user, action) {
   if (!user) return false;
-  if (user.role === 'admin') return true;
   return (RULES[action] ?? []).includes(user.company_role || 'OWNER');
 }
