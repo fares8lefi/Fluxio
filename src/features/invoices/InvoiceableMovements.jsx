@@ -1,8 +1,10 @@
 import { Spinner } from '@/components/ui/Spinner';
 import { AlertTriangle, CheckCircle2, Receipt, FileCheck2, RotateCcw } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/button';
+import { formatTND } from '@/lib/fiscal';
 
-const tnd = (value) => `${Number(value ?? 0).toFixed(3)} TND`;
+const tnd = (value) => `${formatTND(value)} TND`;
 
 const formatDate = (value) =>
   value
@@ -42,7 +44,7 @@ export function MissingFieldsList({ fields = [], max = 4 }) {
   const rest = fields.length - visible.length;
 
   return (
-    <ul className="mt-1 space-y-0.5 text-[11px] text-amber-700">
+    <ul className="mt-1 space-y-0.5 text-xs text-amber-800">
       {visible.map((field, index) => (
         <li key={`${field.scope}-${field.field}-${field.productId ?? index}`} className="flex gap-1">
           <span aria-hidden="true">•</span>
@@ -62,11 +64,11 @@ export function CompanyInfoAlert({ fields = [] }) {
   return (
     <div
       role="status"
-      className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+      className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
     >
       <p className="flex items-center gap-2 font-semibold">
         <AlertTriangle className="size-4 shrink-0" aria-hidden="true" />
-        Informations de l'entreprise incomplètes
+        Complétez la fiche de votre entreprise : ces mentions sont obligatoires sur chaque facture.
       </p>
       <MissingFieldsList fields={fields} max={3} />
     </div>
@@ -92,10 +94,11 @@ export function InvoiceableMovementsTable({
   count = 0,
   onPageChange,
   onGenerate,
+  canGenerate = true,
 }) {
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
+      <div className="flex justify-center rounded-xl border bg-white py-12">
         <Spinner size="md" />
       </div>
     );
@@ -103,102 +106,94 @@ export function InvoiceableMovementsTable({
 
   if (!movements.length) {
     return (
-      <p role="status" className="py-10 text-center text-sm text-slate-500">
-        Aucune vente à facturer pour le moment.
+      <p role="status" className="rounded-xl border border-dashed bg-white py-10 text-center text-sm text-slate-500">
+        Aucune vente à facturer. Les sorties de stock vers un client apparaîtront ici.
       </p>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
+    <div className="overflow-hidden rounded-xl border bg-white">
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="border-b bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <table className="w-full min-w-[760px] text-sm">
+          <thead className="border-b text-left text-xs text-slate-500">
             <tr>
-              <th scope="col" className="px-5 py-3 text-left">Date</th>
-              <th scope="col" className="px-5 py-3 text-left">Réf.</th>
-              <th scope="col" className="px-5 py-3 text-left">Client</th>
-              <th scope="col" className="px-5 py-3 text-left">Articles</th>
-              <th scope="col" className="px-5 py-3 text-right">Total HT</th>
-              <th scope="col" className="px-5 py-3 text-right">Net à payer</th>
-              <th scope="col" className="px-5 py-3 text-center">État</th>
-              <th scope="col" className="px-5 py-3 text-right">Facture</th>
+              <th scope="col" className="px-5 py-3 font-medium">Vente</th>
+              <th scope="col" className="px-5 py-3 font-medium">Client</th>
+              <th scope="col" className="px-5 py-3 font-medium">Articles</th>
+              <th scope="col" className="px-5 py-3 text-right font-medium">Net à payer</th>
+              <th scope="col" className="px-5 py-3 text-right font-medium">Facture</th>
             </tr>
           </thead>
-          <tbody className="divide-y text-xs">
-            {movements.map((movement) => (
-              <tr key={movement.id} className="transition hover:bg-slate-50/70">
-                <td className="px-5 py-3 whitespace-nowrap text-slate-600">{formatDate(movement.date)}</td>
-                <td className="px-5 py-3 whitespace-nowrap font-mono text-slate-700">
-                  {movement.reference ?? <span className="text-slate-300">—</span>}
-                </td>
-                <td className="px-5 py-3 text-slate-800">
-                  {movement.client?.name ?? <span className="text-rose-600">Client non renseigné</span>}
-                </td>
-                <td className="px-5 py-3 text-slate-600">
-                  <span className="font-semibold text-slate-800">{movement.items_count}</span> ligne
-                  {movement.items_count > 1 ? 's' : ''}
-                  <span className="block max-w-[220px] truncate text-[11px] text-slate-400">
-                    {movement.items.map((item) => item.productName).join(', ')}
-                  </span>
-                </td>
-                <td className="px-5 py-3 text-right tabular-nums text-slate-700">
-                  {tnd(movement.preview?.total_ht)}
-                </td>
-                <td className="px-5 py-3 text-right font-bold tabular-nums text-slate-900">
-                  {tnd(movement.preview?.net_payable)}
-                </td>
-                <td className="px-5 py-3 text-center">
-                  <MovementReadinessBadge movement={movement} />
-                </td>
-                <td className="px-5 py-3 text-right whitespace-nowrap">
-                  {movement.has_invoice ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500">
-                      <FileCheck2 className="size-3.5" aria-hidden="true" />
-                      {movement.invoice?.reference}
+          <tbody className="divide-y divide-slate-100">
+            {movements.map((movement) => {
+              const blocking = movement.readiness?.blocking_fields?.length ?? 0;
+              return (
+                <tr key={movement.id} className={`transition hover:bg-slate-50 ${movement.has_invoice ? 'text-slate-400' : ''}`}>
+                  <td className="px-5 py-3.5 whitespace-nowrap">
+                    <p className={`figure font-medium ${movement.has_invoice ? '' : 'text-slate-900'}`}>
+                      {movement.reference ?? 'Sans référence'}
+                    </p>
+                    <p className="text-xs text-slate-500">{formatDate(movement.date)}</p>
+                  </td>
+                  <td className="px-5 py-3.5">
+                    {movement.client?.name ?? <span className="text-rose-600">Client non renseigné</span>}
+                  </td>
+                  <td className="px-5 py-3.5">
+                    <span className="block max-w-[260px] truncate" title={movement.items.map((i) => i.productName).join(', ')}>
+                      {movement.items.map((item) => item.productName).join(', ')}
                     </span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => onGenerate(movement)}
-                      className="inline-flex items-center gap-1 rounded-lg bg-cyan-50 px-2.5 py-1.5 font-semibold text-cyan-800 transition hover:bg-cyan-100"
-                    >
-                      <Receipt className="size-3.5" aria-hidden="true" />
-                      Générer
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
+                    <span className="text-xs text-slate-500">
+                      {movement.items_count} ligne{movement.items_count > 1 ? 's' : ''}, HT {tnd(movement.preview?.total_ht)}
+                    </span>
+                  </td>
+                  <td className={`figure px-5 py-3.5 text-right font-semibold whitespace-nowrap ${movement.has_invoice ? '' : 'text-slate-900'}`}>
+                    {tnd(movement.preview?.net_payable)}
+                  </td>
+                  <td className="px-5 py-3.5 text-right whitespace-nowrap">
+                    {movement.has_invoice ? (
+                      <span className="figure inline-flex items-center gap-1.5 text-xs text-slate-500">
+                        <FileCheck2 className="size-3.5" aria-hidden="true" />
+                        {movement.invoice?.reference}
+                      </span>
+                    ) : !canGenerate ? (
+                      <MovementReadinessBadge movement={movement} />
+                    ) : (
+                      <div className="flex items-center justify-end gap-3">
+                        {blocking > 0 && (
+                          <span className="text-xs text-amber-700">
+                            {blocking} info{blocking > 1 ? 's' : ''} à compléter
+                          </span>
+                        )}
+                        <Button size="sm" variant={blocking > 0 ? 'outline' : 'secondary'} onClick={() => onGenerate(movement)}>
+                          <Receipt className="size-3.5" aria-hidden="true" />
+                          Créer la facture
+                        </Button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
-      <div className="flex items-center justify-between border-t px-5 py-3 text-xs text-slate-500">
+      <div className="flex items-center justify-between border-t px-5 py-3 text-sm text-slate-500">
         <span>
           {count} vente{count !== 1 ? 's' : ''} au total
         </span>
         {totalPages > 1 && (
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => onPageChange(page - 1)}
-              className="rounded-lg border px-3 py-1 font-medium hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              ← Précédent
-            </button>
-            <span className="font-medium">
-              Page {page} / {totalPages}
+            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
+              Précédente
+            </Button>
+            <span className="figure">
+              {page} / {totalPages}
             </span>
-            <button
-              type="button"
-              disabled={page >= totalPages}
-              onClick={() => onPageChange(page + 1)}
-              className="rounded-lg border px-3 py-1 font-medium hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Suivant →
-            </button>
+            <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>
+              Suivante
+            </Button>
           </div>
         )}
       </div>
@@ -224,7 +219,7 @@ export function InvoiceableMovementPicker({ movements, loading, selectedId, onSe
   if (!movements.length) {
     return (
       <p role="status" className="rounded-xl border border-dashed px-4 py-6 text-center text-sm text-slate-500">
-        Aucune vente de type SORTIE (OUT) à facturer.
+        Aucune vente à facturer pour le moment.
       </p>
     );
   }
@@ -294,7 +289,7 @@ export function MovementSummary({ movement }) {
       <div className="overflow-hidden rounded-xl border">
         <table className="w-full text-xs">
           <caption className="sr-only">Lignes de la vente sélectionnée</caption>
-          <thead className="border-b bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          <thead className="border-b bg-slate-50 text-[11px] font-semibold text-slate-500">
             <tr>
               <th scope="col" className="px-3 py-2 text-left">Produit</th>
               <th scope="col" className="px-3 py-2 text-right">Qté</th>
