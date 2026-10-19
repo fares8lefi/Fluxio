@@ -54,17 +54,17 @@ export function TopClientsChart({ topClients = [], isLoading = false }) {
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} layout="vertical" margin={{ top: 5, right: 25, left: 5, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-          <XAxis type="number" tickLine={false} axisLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#e9eded" horizontal={false} />
+          <XAxis type="number" tickLine={false} axisLine={false} tick={{ fill: '#637477', fontSize: 11 }} />
           <YAxis
             type="category"
             dataKey="short"
             tickLine={false}
-            axisLine={{ stroke: '#cbd5e1' }}
-            tick={{ fill: '#64748b', fontSize: 11 }}
+            axisLine={{ stroke: '#d8dfe0' }}
+            tick={{ fill: '#637477', fontSize: 11 }}
             width={140}
           />
-          <Tooltip content={<ClientsTooltip />} cursor={{ fill: '#f8fafc' }} />
+          <Tooltip content={<ClientsTooltip />} cursor={{ fill: '#f4f6f6' }} />
           <Bar dataKey="invoiced_ttc" name="Facturé TTC" fill={CHART_COLORS.cyan} radius={[0, 6, 6, 0]} maxBarSize={22} />
         </BarChart>
       </ResponsiveContainer>
