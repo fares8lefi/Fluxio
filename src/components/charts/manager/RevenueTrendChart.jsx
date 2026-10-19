@@ -58,7 +58,7 @@ export function RevenueTrendChart({ trend = [], isLoading = false }) {
     <ChartFrame
       icon={TrendingUp}
       title="Évolution du chiffre d'affaires (12 mois)"
-      subtitle="Montants TTC émis (facturé) et effectivement encaissés, par mois."
+      subtitle="Facturé TTC net des avoirs (date de facture) et encaissé (date de règlement), par mois."
       isLoading={isLoading}
       isEmpty={!hasData}
       emptyLabel="Aucune facture sur les 12 derniers mois."
@@ -78,7 +78,7 @@ export function RevenueTrendChart({ trend = [], isLoading = false }) {
           </defs>
 
           <CartesianGrid {...gridStroke} />
-          <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: '#cbd5e1' }} tick={axisTick} />
+          <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: '#d8dfe0' }} tick={axisTick} />
           <YAxis tickLine={false} axisLine={false} tick={axisTick} tickFormatter={formatCompact} width={52} />
           <Tooltip content={<TrendTooltip />} />
           <Legend
@@ -86,7 +86,7 @@ export function RevenueTrendChart({ trend = [], isLoading = false }) {
             align="right"
             height={28}
             iconType="circle"
-            wrapperStyle={{ fontSize: 11, color: '#64748b' }}
+            wrapperStyle={{ fontSize: 11, color: '#637477' }}
           />
 
           <Area
