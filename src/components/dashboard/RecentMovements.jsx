@@ -5,7 +5,6 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   RotateCcw,
-  ArrowRight,
   History,
   TriangleAlert,
   Ban,
@@ -21,6 +20,8 @@ const MOVEMENT_TYPES = {
   RETURN_CLIENT: { label: 'Retour client', variant: 'inactive', Icon: RotateCcw },
   ADJUSTMENT: { label: 'Ajustement', variant: 'alert', Icon: ClipboardCheck },
 };
+
+const STATUS_LABELS = { CONFIRMED: 'Confirmé', PENDING: 'En attente', CANCELLED: 'Annulé' };
 
 const formatMoney = (value) => Number(value ?? 0).toFixed(3);
 
@@ -78,24 +79,16 @@ const partnerOf = (movement) => movement.client?.name || movement.supplier?.name
  */
 export function RecentMovements({ movements = [], isLoading = false, error = null, onSeeAll }) {
   return (
-    <section className="overflow-hidden rounded-xl border bg-white shadow-sm" aria-label="Journal des mouvements">
-      <div className="flex items-center justify-between gap-3 border-b bg-slate-50/50 px-5 py-3.5">
-        <div className="flex items-center gap-2">
-          <span className="grid size-7 place-items-center rounded-lg bg-cyan-50 text-cyan-700">
-            <History className="size-4" aria-hidden="true" />
-          </span>
-          <div>
-            <h3 className="text-sm font-semibold text-slate-900">Journal des mouvements</h3>
-            <p className="text-xs text-slate-500">
-              Les {movements.length} mouvement{movements.length > 1 ? 's' : ''} le{movements.length > 1 ? 's' : ''} plus
-              récent{movements.length > 1 ? 's' : ''}, du plus récent au plus ancien.
-            </p>
-          </div>
+    <section className="overflow-hidden rounded-xl border bg-white" aria-label="Derniers mouvements">
+      <div className="flex items-center justify-between gap-3 border-b px-5 py-4">
+        <div>
+          <h3 className="text-base font-semibold text-slate-900">Derniers mouvements</h3>
+          <p className="text-sm text-slate-500">Entrées, sorties et retours, du plus récent au plus ancien.</p>
         </div>
 
         {onSeeAll && (
-          <Button variant="outline" size="sm" onClick={onSeeAll} className="shrink-0 rounded-xl text-xs">
-            Voir tout l'historique <ArrowRight className="ml-1 size-3.5" />
+          <Button variant="outline" size="sm" onClick={onSeeAll} className="shrink-0">
+            Voir l'historique
           </Button>
         )}
       </div>
@@ -161,15 +154,15 @@ export function RecentMovements({ movements = [], isLoading = false, error = nul
 
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs font-semibold text-slate-900">{config.label}</span>
+                    <span className="text-sm font-medium text-slate-900">{config.label}</span>
                     <Badge variant={isCancelled ? 'danger' : config.variant}>
-                      {isCancelled ? 'Annulé' : movement.status}
+                      {STATUS_LABELS[movement.status] ?? movement.status}
                     </Badge>
                     {movement.reference && (
-                      <span className="truncate font-mono text-[11px] text-slate-500">{movement.reference}</span>
+                      <span className="figure truncate text-xs text-slate-500">{movement.reference}</span>
                     )}
                   </div>
-                  <p className="mt-0.5 truncate text-[11px] text-slate-500">
+                  <p className="mt-0.5 truncate text-xs text-slate-500">
                     {partner ? (
                       <>
                         {partner}
@@ -190,11 +183,11 @@ export function RecentMovements({ movements = [], isLoading = false, error = nul
                 </div>
 
                 <div className="shrink-0 text-right">
-                  <p className="text-xs font-bold tabular-nums text-slate-900">
+                  <p className="figure text-sm font-semibold text-slate-900">
                     {formatMoney(movement.total_amount)}{' '}
                     <span className="text-[10px] font-normal text-slate-400">TND</span>
                   </p>
-                  <p className="mt-0.5 text-[11px] text-slate-500" title={absoluteTime(movement.created_at)}>
+                  <p className="mt-0.5 text-xs text-slate-500" title={absoluteTime(movement.created_at)}>
                     {relativeTime(movement.created_at)}
                   </p>
                 </div>
