@@ -4,8 +4,9 @@ import { formatDate, formatTND } from '@/lib/fiscal';
  * FiscalDocument — mise en page commune des documents commerciaux tunisiens
  * (facture, avoir, devis, bons de livraison / réception / retour).
  *
- * Volontairement sobre : noir et blanc, filets fins, A4 portrait, montants
- * à 3 décimales. Les mentions de l'art. 18 du Code de la TVA sont toujours
+ * Volontairement sobre : noir et blanc, filets horizontaux seulement, A4
+ * portrait, montants à 3 décimales. Le titre du document (Facture, Devis…)
+ * est le seul élément en grand, en Archivo élargi. Les mentions de l'art. 18 du Code de la TVA sont toujours
  * présentes ; une valeur absente s'affiche « — » au lieu d'être masquée.
  *
  * @param {string}   title          — FACTURE, FACTURE D'AVOIR, DEVIS, BON DE LIVRAISON…
@@ -44,10 +45,11 @@ export function FiscalDocument({
   watermark,
 }) {
   const showDiscount = showPrices && lines.some((l) => Number(l.discount) > 0);
+  const columnCount = 4 + (showPrices ? 3 : 0) + (showDiscount ? 1 : 0);
   const dash = (v) => (v === null || v === undefined || v === '' ? '—' : v);
 
   return (
-    <article className="fiscal-doc relative mx-auto bg-white font-sans text-[11px] leading-snug text-black">
+    <article className="fiscal-doc relative mx-auto flex flex-col bg-white font-sans text-[11px] leading-snug text-black">
       {watermark && (
         <div
           aria-hidden="true"
@@ -60,22 +62,25 @@ export function FiscalDocument({
       )}
 
       {/* ── En-tête : émetteur à gauche, document à droite ── */}
-      <header className="flex items-start justify-between gap-6 border-b-2 border-black pb-4">
-        <div className="min-w-0">
-          <p className="text-base font-bold uppercase">{dash(seller?.name)}</p>
-          <p className="mt-1">{dash(seller?.address)}</p>
-          {seller?.phone && <p>Tél. : {seller.phone}</p>}
-          <p className="mt-1">
-            Matricule fiscal : <span className="font-mono font-semibold">{dash(seller?.matriculeFiscale)}</span>
+      <header className="flex items-start justify-between gap-8 border-b-2 border-black pb-5">
+        <div className="min-w-0 max-w-[55%]">
+          <p className="text-[15px] leading-tight font-bold">{dash(seller?.name)}</p>
+          <p className="mt-1.5 text-black/75">{dash(seller?.address)}</p>
+          {seller?.phone && <p className="text-black/75">Tél. {seller.phone}</p>}
+          <p className="mt-1.5">
+            <span className="text-black/60">Matricule fiscal</span>{' '}
+            <span className="font-semibold tabular-nums">{dash(seller?.matriculeFiscale)}</span>
           </p>
         </div>
         <div className="shrink-0 text-right">
-          <h1 className="text-lg font-bold tracking-wide uppercase">{title}</h1>
-          <table className="mt-2 ml-auto text-right">
+          <h1 className="text-[28px] leading-none font-semibold" style={{ fontStretch: '125%', letterSpacing: '-0.02em' }}>
+            {title}
+          </h1>
+          <table className="mt-3 ml-auto text-right">
             <tbody>
               <tr>
                 <td className="pr-3 text-black/60">N°</td>
-                <td className="font-mono font-bold">{reference}</td>
+                <td className="text-[12px] font-bold tabular-nums">{reference}</td>
               </tr>
               <tr>
                 <td className="pr-3 text-black/60">Date</td>
@@ -94,33 +99,39 @@ export function FiscalDocument({
 
       {/* ── Destinataire ── */}
       {party !== undefined && (
-        <section className="mt-4 ml-auto w-1/2 border border-black p-3">
-          <p className="text-[9px] font-bold tracking-wider text-black/60 uppercase">
-            {party?.label ?? 'Client'}
-          </p>
-          <p className="mt-0.5 text-[12px] font-bold">{dash(party?.name)}</p>
-          <p>{dash(party?.address)}</p>
-          {party?.phone && <p>Tél. : {party.phone}</p>}
-          {party && 'matriculeFiscale' in party && (
-            <p className="mt-1">
-              Matricule fiscal : <span className="font-mono font-semibold">{dash(party.matriculeFiscale)}</span>
-            </p>
-          )}
-          {party?.codeTva && <p>Code TVA : <span className="font-mono">{party.codeTva}</span></p>}
+        <section className="mt-4 flex justify-end">
+          {/* Placé à droite : visible dans la fenêtre d'une enveloppe */}
+          <div className="w-1/2 rounded-sm border border-black/40 px-4 py-3">
+            <p className="text-[9.5px] text-black/60">{party?.label ?? 'Client'}</p>
+            <p className="mt-0.5 text-[13px] font-bold">{dash(party?.name)}</p>
+            <p className="text-black/75">{dash(party?.address)}</p>
+            {party?.phone && <p className="text-black/75">Tél. {party.phone}</p>}
+            {party && 'matriculeFiscale' in party && (
+              <p className="mt-1">
+                <span className="text-black/60">Matricule fiscal</span>{' '}
+                <span className="font-semibold tabular-nums">{dash(party.matriculeFiscale)}</span>
+              </p>
+            )}
+            {party?.codeTva && (
+              <p>
+                <span className="text-black/60">Code TVA</span> <span className="tabular-nums">{party.codeTva}</span>
+              </p>
+            )}
+          </div>
         </section>
       )}
 
       {/* ── Mentions particulières ── */}
       {notices.map((n) => (
-        <p key={n} className="mt-3 border border-black px-3 py-1.5 font-semibold">
+        <p key={n} className="mt-3 border-l-4 border-black bg-black/[0.04] px-3 py-1.5 font-semibold">
           {n}
         </p>
       ))}
 
-      {/* ── Lignes ── */}
-      <table className="fiscal-lines mt-4 w-full border-collapse">
+      {/* ── Lignes : grille encadrée qui s'étire jusqu'aux totaux pour remplir la feuille ── */}
+      <table className="fiscal-lines mt-6 w-full flex-1 border-collapse border-[1.5px] border-black">
         <thead>
-          <tr className="bg-black/[0.06]">
+          <tr className="border-b-[1.5px] border-black bg-black/[0.05]">
             <Th className="w-[12%] text-left">Réf.</Th>
             <Th className="text-left">Désignation</Th>
             <Th className="w-[8%] text-center">Unité</Th>
@@ -134,8 +145,8 @@ export function FiscalDocument({
         <tbody>
           {lines.map((l, i) => (
             <tr key={i} className="break-inside-avoid">
-              <Td className="font-mono">{dash(l.code)}</Td>
-              <Td>{l.name}</Td>
+              <Td className="tabular-nums text-black/70">{dash(l.code)}</Td>
+              <Td className="font-medium">{l.name}</Td>
               <Td className="text-center">{dash(l.unit)}</Td>
               <Td className="text-right tabular-nums">{l.quantity}</Td>
               {showPrices && <Td className="text-right tabular-nums">{formatTND(l.unitPriceHT)}</Td>}
@@ -153,27 +164,34 @@ export function FiscalDocument({
               <Td colSpan={8} className="py-4 text-center text-black/50">Aucune ligne</Td>
             </tr>
           )}
+          {/* Ligne de remplissage : prend la hauteur restante, prolonge les filets de colonnes */}
+          <tr aria-hidden="true" className="fiscal-filler">
+            {Array.from({ length: columnCount }, (_, i) => (
+              <td key={i} className="border-x border-black/25 p-0" />
+            ))}
+          </tr>
         </tbody>
       </table>
 
       {/* ── Récapitulatif TVA + totaux ── */}
       {(tvaBreakdown.length > 0 || totals.length > 0) && (
-        <section className="mt-4 flex items-start justify-between gap-6 break-inside-avoid">
+        <section className="mt-4 flex items-start justify-between gap-8 break-inside-avoid">
           {tvaBreakdown.length > 0 ? (
-            <table className="w-[45%] border-collapse">
+            <table className="w-[42%] border-collapse">
+              <caption className="pb-1 text-left text-[9.5px] text-black/60">Récapitulatif TVA</caption>
               <thead>
-                <tr className="bg-black/[0.06]">
-                  <Th className="text-left">Taux TVA</Th>
-                  <Th className="text-right">Base HT</Th>
-                  <Th className="text-right">Montant TVA</Th>
+                <tr className="border-b border-black/40">
+                  <Th ruled={false} className="text-left">Taux TVA</Th>
+                  <Th ruled={false} className="text-right">Base HT</Th>
+                  <Th ruled={false} className="text-right">Montant TVA</Th>
                 </tr>
               </thead>
               <tbody>
                 {tvaBreakdown.map((t) => (
                   <tr key={t.rate}>
-                    <Td>{t.rate} %</Td>
-                    <Td className="text-right tabular-nums">{formatTND(t.base_ht)}</Td>
-                    <Td className="text-right tabular-nums">{formatTND(t.tva_amount)}</Td>
+                    <Td ruled={false}>{t.rate} %</Td>
+                    <Td ruled={false} className="text-right tabular-nums">{formatTND(t.base_ht)}</Td>
+                    <Td ruled={false} className="text-right tabular-nums">{formatTND(t.tva_amount)}</Td>
                   </tr>
                 ))}
               </tbody>
@@ -182,7 +200,7 @@ export function FiscalDocument({
             <span />
           )}
 
-          <table className="w-[45%] border-collapse">
+          <table className="w-[46%] border-collapse">
             <tbody>
               {totals.map((t) => (
                 <tr
@@ -191,14 +209,18 @@ export function FiscalDocument({
                     t.emphasis === 'net'
                       ? 'bg-black text-white'
                       : t.emphasis === 'total'
-                        ? 'bg-black/[0.06] font-bold'
+                        ? 'border-t border-black font-bold'
                         : ''
                   }
                 >
-                  <Td className={t.emphasis ? 'font-bold' : ''}>{t.label}</Td>
-                  <Td className={`text-right tabular-nums ${t.emphasis ? 'font-bold' : ''}`}>
+                  <td className={`px-2 ${t.emphasis === 'net' ? 'py-2 text-[12px] font-bold' : 'py-1'}`}>{t.label}</td>
+                  <td
+                    className={`px-2 text-right tabular-nums ${
+                      t.emphasis === 'net' ? 'py-2 text-[14px] font-bold' : t.emphasis ? 'py-1 font-bold' : 'py-1'
+                    }`}
+                  >
                     {t.raw ? t.value : formatTND(t.value)}
-                  </Td>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -207,7 +229,7 @@ export function FiscalDocument({
       )}
 
       {amountInWords && (
-        <p className="mt-4 break-inside-avoid">
+        <p className="mt-5 break-inside-avoid">
           {wordsLabel} : <span className="font-bold">{amountInWords}</span>
         </p>
       )}
@@ -225,34 +247,38 @@ export function FiscalDocument({
           style={{ gridTemplateColumns: `repeat(${signatures.length}, minmax(0, 1fr))` }}
         >
           {signatures.map((s) => (
-            <div key={s} className="h-28 border border-black p-2">
-              <p className="text-[9px] font-bold tracking-wider text-black/60 uppercase">{s}</p>
+            <div key={s} className="h-28 rounded-sm border border-black/40 p-2">
+              <p className="text-[9.5px] text-black/60">{s}</p>
             </div>
           ))}
         </section>
       )}
 
       {/* ── Pied de page ── */}
-      <footer className="mt-6 border-t border-black pt-2 text-center text-[9px] text-black/60">
+      <footer className="mt-8 border-t border-black/30 pt-2 text-center text-[9px] text-black/60">
         {[seller?.name, seller?.address, seller?.matriculeFiscale && `MF ${seller.matriculeFiscale}`, seller?.phone && `Tél. ${seller.phone}`]
           .filter(Boolean)
-          .join(' — ')}
+          .join(', ')}
       </footer>
     </article>
   );
 }
 
-function Th({ className = '', children }) {
+/** ruled : filets verticaux de colonne (grille des lignes uniquement) */
+function Th({ className = '', ruled = true, children }) {
   return (
-    <th className={`border border-black px-2 py-1.5 text-[9px] font-bold tracking-wide uppercase ${className}`}>
+    <th className={`${ruled ? 'border-x border-black/25' : ''} px-2 py-1.5 text-[9.5px] font-semibold ${className}`}>
       {children}
     </th>
   );
 }
 
-function Td({ className = '', children, ...props }) {
+function Td({ className = '', ruled = true, children, ...props }) {
   return (
-    <td className={`border border-black px-2 py-1 align-top ${className}`} {...props}>
+    <td
+      className={`border-b ${ruled ? 'border-x border-x-black/25 border-b-black/10' : 'border-black/15'} px-2 py-1.5 align-top ${className}`}
+      {...props}
+    >
       {children}
     </td>
   );
