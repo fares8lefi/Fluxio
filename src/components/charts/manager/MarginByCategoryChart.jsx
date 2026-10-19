@@ -64,15 +64,15 @@ export function MarginByCategoryChart({ byCategory = [], isLoading = false }) {
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 5, right: 15, left: -5, bottom: 0 }}>
           <CartesianGrid {...gridStroke} />
-          <XAxis dataKey="short" tickLine={false} axisLine={{ stroke: '#cbd5e1' }} tick={axisTick} interval={0} />
+          <XAxis dataKey="short" tickLine={false} axisLine={{ stroke: '#d8dfe0' }} tick={axisTick} interval={0} />
           <YAxis tickLine={false} axisLine={false} tick={axisTick} tickFormatter={formatCompact} width={52} />
-          <Tooltip content={<MarginTooltip />} cursor={{ fill: '#f8fafc' }} />
+          <Tooltip content={<MarginTooltip />} cursor={{ fill: '#f4f6f6' }} />
           <Legend
             verticalAlign="top"
             align="right"
             height={28}
             iconType="circle"
-            wrapperStyle={{ fontSize: 11, color: '#64748b' }}
+            wrapperStyle={{ fontSize: 11, color: '#637477' }}
           />
           <Bar dataKey="sales_ht" name="Ventes HT" fill={CHART_COLORS.cyan} radius={[6, 6, 0, 0]} maxBarSize={26} />
           <Bar dataKey="margin" name="Marge estimée" fill={CHART_COLORS.emerald} radius={[6, 6, 0, 0]} maxBarSize={26} />
