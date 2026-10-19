@@ -156,7 +156,7 @@ export function MovementDetailModal({
               </div>
             </div>
             <div className="text-right">
-              <p className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
+              <p className="text-xs font-semibold text-slate-400">
                 Montant Total
               </p>
               <p className="text-xl font-bold text-slate-900 tabular-nums">
@@ -231,7 +231,7 @@ export function MovementDetailModal({
 
           {/* Tableau des articles */}
           <div>
-            <h3 className="mb-2 text-xs font-semibold tracking-wider text-slate-400 uppercase">
+            <h3 className="mb-2 text-xs font-semibold text-slate-400">
               Articles déplacés ({movement.items?.length ?? 0})
             </h3>
             <div className="overflow-hidden rounded-xl border">
