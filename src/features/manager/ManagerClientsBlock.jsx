@@ -58,8 +58,8 @@ export function ManagerClientsBlock({ block, onRetry }) {
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard icon={Users} tone="indigo" label="Clients" value={formatInt(counts?.total)} hint="Comptes enregistrés" />
-            <StatCard icon={UserCheck} tone="emerald" label="Actifs" value={formatInt(counts?.active)} hint="is_active = true" />
-            <StatCard icon={UserX} tone="slate" label="Inactifs" value={formatInt(counts?.inactive)} hint="Aucune activité récente" />
+            <StatCard icon={UserCheck} tone="emerald" label="Actifs" value={formatInt(counts?.active)} hint="Comptes clients actifs" />
+            <StatCard icon={UserX} tone="slate" label="Inactifs" value={formatInt(counts?.inactive)} hint="Comptes désactivés" />
             <StatCard
               icon={Sparkles}
               tone="cyan"
@@ -116,7 +116,7 @@ export function ManagerClientsBlock({ block, onRetry }) {
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
-                      <thead className="border-b bg-slate-50/80 font-semibold tracking-wider text-slate-500 uppercase">
+                      <thead className="border-b bg-slate-50/80 font-semibold text-slate-500">
                         <tr>
                           <th className="px-5 py-2.5 text-left">Client</th>
                           <th className="px-5 py-2.5 text-right">Encours TTC</th>
