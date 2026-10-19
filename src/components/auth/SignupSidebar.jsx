@@ -1,26 +1,23 @@
+import { Logo } from '@/components/ui/Logo';
+import { StockTag } from '@/components/landing/StockTag';
+
+/** Left panel of the auth pages: same ink + shelf tag as the landing hero */
 export function SignupSidebar() {
   return (
-    <aside className="hidden bg-slate-950 p-12 text-white lg:flex lg:flex-col lg:justify-between">
-      <a className="text-xl font-semibold" href="#accueil">
-        <span className="mr-2 inline-grid size-8 place-items-center rounded-lg bg-cyan-400 text-sm text-slate-950">
-          F
-        </span>
-        Fluxio
+    <aside className="hidden bg-cyan-900 p-12 text-white lg:flex lg:flex-col lg:justify-between">
+      <a href="#accueil" aria-label="Fluxio, accueil" className="self-start">
+        <Logo ink />
       </a>
-      <div>
-        <p className="text-sm font-semibold text-cyan-300">
-          LE MVP EST GRATUIT
-        </p>
-        <h1 className="mt-4 text-5xl font-semibold tracking-tight">
-          Votre entreprise commence ici.
+      <div className="flex flex-col gap-10">
+        <h1 className="max-w-md text-4xl leading-tight font-semibold">
+          Le stock à jour, la liste d'achats prête.
         </h1>
-        <p className="mt-5 text-lg leading-8 text-slate-300">
-          Créez votre espace sécurisé pour gérer vos stocks, produits, clients
-          et factures.
-        </p>
+        <div className="origin-top-left scale-90">
+          <StockTag />
+        </div>
       </div>
-      <p className="text-sm text-slate-400">
-        Vos données sont isolées pour votre entreprise.
+      <p className="text-sm text-cyan-100/60">
+        Gratuit pendant la phase de test. Les données de votre entreprise restent séparées des autres.
       </p>
     </aside>
   );
