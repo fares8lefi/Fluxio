@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
-  FileText, Plus, Eye, Wallet, XCircle, RotateCcw, Search, ListChecks, Download
+  FileText, Plus, Eye, Wallet, XCircle, RotateCcw, Search, Download, ChevronDown, Printer,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TableSkeleton } from '@/components/ui/Skeleton';
@@ -13,14 +14,18 @@ import { InvoicePdfModal } from './InvoicePdfModal';
 import { GenerateInvoiceModal } from './GenerateInvoiceModal';
 import { PaymentModal } from './PaymentModal';
 import { AccountantExportModal } from './AccountantExportModal';
-import { InvoicingStats, SalesPipelineStats } from './InvoiceStats';
+import { InvoiceBatchPrintModal } from './InvoiceBatchPrintModal';
+import { CreditNoteStatementModal } from './CreditNoteStatementModal';
+import { downloadInvoicesCsv } from './invoice-csv';
+import { INVOICE_PERIODS, isValidRange, periodRange, rangeLabel } from './invoice-period';
+import { BillingSummary, Money, SalesPipelineSummary } from './InvoiceStats';
 import {
   CompanyInfoAlert,
   InvoiceableMovementsTable,
 } from './InvoiceableMovements';
 import { useInvoiceableMovements } from './use-invoiceable-movements';
 import {
-  getAllInvoices, updateInvoiceStatus, createCreditNote,
+  getInvoicesInRange, updateInvoiceStatus, createCreditNote,
 } from '@/services/invoiceService';
 import { getClients } from '@/services/clientService';
 
@@ -32,10 +37,60 @@ const STATUS_CONFIG = {
 };
 
 const TYPE_CONFIG = {
-  SALE:        { label: 'Facture Vente', badgeClass: 'bg-cyan-100 text-cyan-800' },
-  CREDIT_NOTE: { label: 'Avoir',         badgeClass: 'bg-amber-100 text-amber-800' },
-  PROFORMA:    { label: 'Pro Forma',     badgeClass: 'bg-indigo-100 text-indigo-800' },
+  SALE:        { label: 'Facture de vente' },
+  CREDIT_NOTE: { label: 'Avoir' },
+  PROFORMA:    { label: 'Pro forma' },
 };
+
+/** Reste à payer d'une facture (net à payer moins les règlements reçus) */
+const remainingOf = (inv) =>
+  Math.max((inv.net_payable ?? inv.total_ttc ?? 0) - (inv.amount_paid || 0), 0);
+
+/** Statut + avancement du règlement : une barre fine pour les paiements partiels */
+function PaymentState({ invoice, statusMeta }) {
+  // Compensée par un avoir : plus rien n'est dû, quel que soit le statut de règlement
+  if (invoice.credit_note_reference) {
+    return (
+      <div>
+        <Badge variant="inactive">Avoir émis</Badge>
+        <p className="mt-1 text-xs text-slate-500">{invoice.credit_note_reference}</p>
+      </div>
+    );
+  }
+  if (invoice.status !== 'PARTIALLY_PAID') {
+    return <Badge variant={statusMeta.variant}>{statusMeta.label}</Badge>;
+  }
+  const total = invoice.net_payable ?? invoice.total_ttc ?? 0;
+  const paid = Math.min(100, total > 0 ? ((invoice.amount_paid || 0) / total) * 100 : 0);
+  return (
+    <div className="w-40">
+      <div className="flex h-1.5 overflow-hidden rounded-full bg-amber-100" aria-hidden="true">
+        <span className="bg-emerald-600" style={{ width: `${paid}%` }} />
+      </div>
+      <p className="mt-1 text-xs text-slate-600">
+        Reste <Money value={remainingOf(invoice)} className="font-medium text-slate-900" />
+      </p>
+    </div>
+  );
+}
+
+/** Action secondaire de ligne : icône seule, nom accessible + infobulle */
+function IconAction({ label, onClick, disabled, danger = false, children }) {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      onClick={onClick}
+      disabled={disabled}
+      className={`grid size-8 place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:outline-none disabled:opacity-40 ${
+        danger ? 'hover:text-rose-600' : 'hover:text-slate-900'
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
 
 const LIMIT_PER_PAGE = 10;
 
@@ -53,6 +108,15 @@ export function InvoicesPage({ initialType = 'ALL' }) {
   const [pdfInvoiceId, setPdfInvoiceId] = useState(null);
   const [paymentInvoice, setPaymentInvoice] = useState(null);
   const [exportOpen, setExportOpen] = useState(false);
+  const [batchOpen, setBatchOpen] = useState(false);
+  const [statementOpen, setStatementOpen] = useState(false);
+
+  // ── Période des factures émises ──
+  const [period, setPeriod] = useState('month');
+  const [customRange, setCustomRange] = useState(() => periodRange('month'));
+  const range = useMemo(() => periodRange(period, customRange), [period, customRange]);
+  const rangeValid = isValidRange(range);
+  const periodText = rangeValid ? rangeLabel(range) : '';
   const [actionLoading, setActionLoading] = useState(null);
 
   // ── Ventes (mouvements OUT) disponibles pour la facturation ──
@@ -82,6 +146,10 @@ export function InvoicesPage({ initialType = 'ALL' }) {
   };
 
   const load = useCallback(async () => {
+    if (!rangeValid) {
+      setInvoices([]);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -90,17 +158,18 @@ export function InvoicesPage({ initialType = 'ALL' }) {
       if (filterStatus) filters.status = filterStatus;
 
       const [invRes, clientsRes] = await Promise.allSettled([
-        getAllInvoices(filters),
+        getInvoicesInRange(range, filters),
         getClients(),
       ]);
       if (invRes.status === 'fulfilled') setInvoices(invRes.value?.invoices ?? []);
+      else setError(invRes.reason?.message || 'Impossible de charger les factures');
       if (clientsRes.status === 'fulfilled') setClients(clientsRes.value?.clients ?? []);
     } catch (e) {
       setError(e.message);
     } finally {
       setLoading(false);
     }
-  }, [filterType, filterStatus]);
+  }, [filterType, filterStatus, range, rangeValid]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -111,8 +180,12 @@ export function InvoicesPage({ initialType = 'ALL' }) {
 
   const handleStatusUpdate = async (inv, status) => {
     const ok = await confirm({
-      title: 'Changer le statut',
-      description: `La facture ${inv.reference} passera au statut « ${status} ».`,
+      title: status === 'CANCELLED' ? 'Annuler la facture' : 'Changer le statut',
+      description:
+        status === 'CANCELLED'
+          ? `La facture ${inv.reference} sera annulée. Elle restera visible dans la liste, barrée.`
+          : `La facture ${inv.reference} passera au statut « ${STATUS_CONFIG[status]?.label ?? status} ».`,
+      confirmLabel: status === 'CANCELLED' ? 'Annuler la facture' : undefined,
       destructive: status === 'CANCELLED',
     });
     if (!ok) return;
@@ -148,17 +221,22 @@ export function InvoicesPage({ initialType = 'ALL' }) {
     }
   };
 
-  // KPIs
+  // Indicateurs
   const totalTTC = invoices
     .filter(i => i.status !== 'CANCELLED' && i.invoice_type !== 'CREDIT_NOTE')
     .reduce((s, i) => s + (i.total_ttc || 0), 0);
-  // Encaissé = règlements reçus ; en attente = reste à payer des factures ouvertes
+  // Encaissé = règlements reçus ; reste = reste à payer des factures ouvertes
   const totalPaid = invoices
     .filter(i => i.invoice_type === 'SALE' && i.status !== 'CANCELLED')
     .reduce((s, i) => s + (i.amount_paid || 0), 0);
-  const totalPending = invoices
-    .filter(i => (i.status === 'PENDING' || i.status === 'PARTIALLY_PAID') && i.invoice_type === 'SALE')
-    .reduce((s, i) => s + Math.max((i.net_payable ?? i.total_ttc ?? 0) - (i.amount_paid || 0), 0), 0);
+  // Une facture compensée par un avoir n'est plus due
+  const openInvoices = invoices.filter(
+    i =>
+      (i.status === 'PENDING' || i.status === 'PARTIALLY_PAID') &&
+      i.invoice_type === 'SALE' &&
+      !i.credit_note_reference
+  );
+  const totalPending = openInvoices.reduce((s, i) => s + remainingOf(i), 0);
   const creditNoteCount = invoices.filter(i => i.invoice_type === 'CREDIT_NOTE').length;
 
   const tabs = [
@@ -168,61 +246,55 @@ export function InvoicesPage({ initialType = 'ALL' }) {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
       {/* ── En-tête ── */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Facturation</h1>
+          <h1 className="text-xl font-semibold text-slate-900">
+            {initialType === 'CREDIT_NOTE' ? 'Avoirs' : 'Factures'}
+          </h1>
           <p className="mt-0.5 text-sm text-slate-500">
-            Gestion des factures de vente selon la réglementation fiscale tunisienne.
+            Factures de vente et avoirs, avec les mentions fiscales tunisiennes.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" className="rounded-xl" onClick={() => setExportOpen(true)}>
-            <Download className="mr-2 size-4" /> Exporter pour le comptable
+          <Button variant="outline" onClick={() => setStatementOpen(true)}>
+            <RotateCcw className="size-4" /> Relevé des avoirs
           </Button>
-          <Button
-            onClick={() => openGenerate()}
-            hidden={!canWriteBilling}
-            className="rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white"
-          >
-            <Plus className="mr-2 size-4" /> Générer une facture
+          <Button variant="outline" onClick={() => setExportOpen(true)}>
+            <Download className="size-4" /> Exporter pour le comptable
+          </Button>
+          <Button onClick={() => openGenerate()} hidden={!canWriteBilling}>
+            <Plus className="size-4" /> Nouvelle facture
           </Button>
         </div>
       </div>
 
-      {/* ── Indicateurs (en haut) ── */}
-      <InvoicingStats
+      <BillingSummary
+        loading={loading}
         totalTTC={totalTTC}
         totalPaid={totalPaid}
         totalPending={totalPending}
+        openCount={openInvoices.length}
         creditNoteCount={creditNoteCount}
       />
-
-      <section className="space-y-3">
-        <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-          <ListChecks className="size-4 text-rose-600" aria-hidden="true" />
-          Pipeline de facturation — ventes (SORTIE / OUT)
-        </h2>
-        <SalesPipelineStats summary={sales.summary} />
-      </section>
 
       {/* ── Alertes ── */}
       <CompanyInfoAlert fields={sales.company_missing_fields} />
       {error && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
           {error}
-        </div>
+        </p>
       )}
 
-      {/* ── Lignes : ventes à facturer ── */}
-      <section className="space-y-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-base font-semibold text-slate-900">Ventes à facturer</h2>
-            <p className="text-xs text-slate-500">
-              {sales.count} mouvement(s) de type SORTIE (OUT) — sélectionnez une vente pour éditer sa facture.
-            </p>
+      {/* ── Ventes à facturer ── */}
+      <section aria-labelledby="sales-title" className="space-y-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-1.5">
+            <h2 id="sales-title" className="text-lg font-semibold text-slate-900">
+              Ventes à facturer
+            </h2>
+            <SalesPipelineSummary summary={sales.summary} />
           </div>
 
           <div className="flex items-center gap-2">
@@ -238,12 +310,18 @@ export function InvoicesPage({ initialType = 'ALL' }) {
                 id="sales-search"
                 value={salesSearchInput}
                 onChange={(e) => setSalesSearchInput(e.target.value)}
-                placeholder="Rechercher une vente…"
-                className="w-full rounded-lg border border-slate-200 bg-white py-1.5 pr-3 pl-9 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 sm:w-64"
+                placeholder="Client ou référence…"
+                className="h-9 w-full rounded-md border border-slate-200 bg-white pr-3 pl-9 text-sm focus:ring-2 focus:ring-cyan-500 focus:outline-none sm:w-64"
               />
             </div>
-            <Button variant="outline" className="rounded-xl" onClick={() => setShowSales((v) => !v)}>
-              {showSales ? 'Masquer' : 'Afficher'}
+            <Button
+              variant="ghost"
+              onClick={() => setShowSales((v) => !v)}
+              aria-expanded={showSales}
+              className="text-slate-600"
+            >
+              {showSales ? 'Replier' : 'Déplier'}
+              <ChevronDown className={`size-4 transition-transform ${showSales ? 'rotate-180' : ''}`} />
             </Button>
           </div>
         </div>
@@ -251,10 +329,7 @@ export function InvoicesPage({ initialType = 'ALL' }) {
         {showSales && (
           <>
             {sales.error && (
-              <p
-                role="alert"
-                className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
-              >
+              <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                 {sales.error}
               </p>
             )}
@@ -266,31 +341,32 @@ export function InvoicesPage({ initialType = 'ALL' }) {
               totalPages={salesPages}
               onPageChange={setSalesPage}
               onGenerate={openGenerate}
+              canGenerate={canWriteBilling}
             />
           </>
         )}
       </section>
 
-      {/* ── Lignes : factures émises ── */}
-      <section className="space-y-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-base font-semibold text-slate-900">Factures émises</h2>
-            <p className="text-xs text-slate-500">
-              {invoices.length} facture(s) affichée(s) sur la page courante.
-            </p>
-          </div>
+      {/* ── Factures émises ── */}
+      <section aria-labelledby="issued-title" className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <h2 id="issued-title" className="text-lg font-semibold text-slate-900">
+            Factures émises
+            <span className="figure ml-2 text-base font-normal text-slate-400">{invoices.length}</span>
+          </h2>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex rounded-xl border bg-slate-50 p-0.5 text-sm font-medium">
+          <div className="flex flex-wrap items-center gap-2">
+            <div role="tablist" aria-label="Type de document" className="flex rounded-lg bg-slate-100 p-0.5 text-sm">
               {tabs.map(tab => (
                 <button
                   key={tab.key}
                   type="button"
+                  role="tab"
+                  aria-selected={filterType === tab.key}
                   onClick={() => setFilterType(tab.key)}
-                  className={`rounded-lg px-4 py-1.5 transition ${
+                  className={`rounded-md px-3.5 py-1.5 font-medium transition ${
                     filterType === tab.key
-                      ? 'bg-white font-semibold text-cyan-800 shadow-sm'
+                      ? 'bg-white text-slate-900 shadow-sm'
                       : 'text-slate-500 hover:text-slate-900'
                   }`}
                 >
@@ -303,7 +379,7 @@ export function InvoicesPage({ initialType = 'ALL' }) {
               value={filterStatus}
               onChange={e => setFilterStatus(e.target.value)}
               aria-label="Filtrer les factures par statut"
-              className="rounded-lg border bg-white px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              className="h-9 rounded-md border bg-white px-3 text-sm text-slate-700 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
             >
               <option value="">Tous les statuts</option>
               <option value="PENDING">En attente</option>
@@ -314,117 +390,176 @@ export function InvoicesPage({ initialType = 'ALL' }) {
           </div>
         </div>
 
+        {/* ── Période : toutes les factures de la plage, sans pagination ── */}
+        <div className="flex flex-col gap-3 rounded-xl border bg-white p-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="grid gap-1 text-xs font-medium text-slate-500">
+              Période
+              <select
+                value={period}
+                onChange={(e) => setPeriod(e.target.value)}
+                className="h-9 rounded-md border bg-white px-3 text-sm text-slate-700 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+              >
+                {INVOICE_PERIODS.map((p) => (
+                  <option key={p.key} value={p.key}>{p.label}</option>
+                ))}
+              </select>
+            </label>
+            {period === 'custom' ? (
+              <>
+                <label className="grid gap-1 text-xs font-medium text-slate-500">
+                  Du
+                  <input
+                    type="date"
+                    value={customRange.from}
+                    max={customRange.to || undefined}
+                    onChange={(e) => setCustomRange((r) => ({ ...r, from: e.target.value }))}
+                    className="h-9 rounded-md border bg-white px-3 text-sm text-slate-700 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                  />
+                </label>
+                <label className="grid gap-1 text-xs font-medium text-slate-500">
+                  Au
+                  <input
+                    type="date"
+                    value={customRange.to}
+                    min={customRange.from || undefined}
+                    onChange={(e) => setCustomRange((r) => ({ ...r, to: e.target.value }))}
+                    className="h-9 rounded-md border bg-white px-3 text-sm text-slate-700 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                  />
+                </label>
+              </>
+            ) : (
+              <p className="pb-2 text-sm text-slate-600">{periodText}</p>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setBatchOpen(true)}
+              disabled={loading || !rangeValid || invoices.length === 0}
+            >
+              <Printer className="size-4" /> Tout imprimer / PDF
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => downloadInvoicesCsv(invoices, `factures ${periodText}.csv`.replaceAll('/', '-'))}
+              disabled={loading || !rangeValid || invoices.length === 0}
+            >
+              <FileSpreadsheet className="size-4" /> Liste (CSV)
+            </Button>
+          </div>
+        </div>
+
+        {!rangeValid && (
+          <p role="alert" className="text-sm text-rose-600">
+            Choisissez une date de début et une date de fin, la première avant la seconde.
+          </p>
+        )}
+
         {loading ? (
           <TableSkeleton columns={6} />
         ) : invoices.length === 0 ? (
           <EmptyState
             Icon={FileText}
-            title="Aucune facture"
-            description="Générez votre première facture depuis un mouvement de vente (Sortie)."
-            actionLabel={canWriteBilling ? 'Générer une facture' : undefined}
+            title="Aucune facture sur cette période"
+            description={`Aucune facture ${periodText}. Changez de période ou choisissez une vente ci-dessus pour la facturer.`}
+            actionLabel={canWriteBilling ? 'Nouvelle facture' : undefined}
             onAction={() => openGenerate()}
           />
         ) : (
-          <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
-            <table className="w-full text-sm">
-              <thead className="border-b bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <div className="relative overflow-x-auto rounded-xl border bg-white">
+            <table className="w-full min-w-[760px] text-sm">
+              <thead className="border-b text-left text-xs text-slate-500">
                 <tr>
-                  <th scope="col" className="px-5 py-3 text-left">Référence</th>
-                  <th scope="col" className="px-5 py-3 text-left">Date</th>
-                  <th scope="col" className="px-5 py-3 text-left">Client</th>
-                  <th scope="col" className="px-5 py-3 text-center">Type</th>
-                  <th scope="col" className="px-5 py-3 text-center">Statut</th>
-                  <th scope="col" className="px-5 py-3 text-right">Total TTC</th>
-                  <th scope="col" className="px-5 py-3 text-right">Net à payer</th>
-                  <th scope="col" className="px-5 py-3" />
+                  <th scope="col" className="px-5 py-3 font-medium">Facture</th>
+                  <th scope="col" className="px-5 py-3 font-medium">Client</th>
+                  <th scope="col" className="px-5 py-3 font-medium">Règlement</th>
+                  <th scope="col" className="px-5 py-3 text-right font-medium">Net à payer</th>
+                  <th scope="col" className="px-5 py-3"><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody className="divide-y divide-slate-100">
                 {invoices.map(inv => {
                   const typeMeta = TYPE_CONFIG[inv.invoice_type] || TYPE_CONFIG.SALE;
                   const statusMeta = STATUS_CONFIG[inv.status] || STATUS_CONFIG.PENDING;
                   const isLoading = actionLoading === inv.id;
+                  const isCredited = Boolean(inv.credit_note_reference);
+                  const isOpen =
+                    inv.invoice_type === 'SALE' &&
+                    !isCredited &&
+                    (inv.status === 'PENDING' || inv.status === 'PARTIALLY_PAID');
+                  const isSale = inv.invoice_type === 'SALE' && inv.status !== 'CANCELLED';
                   return (
-                    <tr key={inv.id} className="transition hover:bg-slate-50/60">
-                      <td className="px-5 py-3 font-mono font-semibold text-slate-800">{inv.reference}</td>
-                      <td className="px-5 py-3 text-slate-500">
-                        {new Date(inv.date).toLocaleDateString('fr-FR', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
+                    <tr
+                      key={inv.id}
+                      className={`transition hover:bg-slate-50 ${inv.status === 'CANCELLED' ? 'text-slate-400' : ''}`}
+                    >
+                      <td className="px-5 py-3.5 whitespace-nowrap">
+                        <p className={`figure font-semibold ${inv.status === 'CANCELLED' ? 'line-through' : 'text-slate-900'}`}>
+                          {inv.reference}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {inv.invoice_type !== 'SALE' && <span className="text-amber-700">{typeMeta.label}, </span>}
+                          {new Date(inv.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </p>
                       </td>
-                      <td className="px-5 py-3 text-slate-700">
-                        {inv.client?.name ?? <span className="text-slate-300">—</span>}
+                      <td className="px-5 py-3.5 text-slate-700">
+                        {inv.client?.name ?? <span className="text-slate-400">Sans client</span>}
                       </td>
-                      <td className="px-5 py-3 text-center">
-                        <span className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${typeMeta.badgeClass}`}>
-                          {typeMeta.label}
-                        </span>
+                      <td className="px-5 py-3.5">
+                        <PaymentState invoice={inv} statusMeta={statusMeta} />
                       </td>
-                      <td className="px-5 py-3 text-center">
-                        <Badge variant={statusMeta.variant}>{statusMeta.label}</Badge>
+                      <td className="px-5 py-3.5 text-right font-semibold text-slate-900">
+                        <Money value={inv.net_payable ?? inv.total_ttc} />
                       </td>
-                      <td className="px-5 py-3 text-right font-bold tabular-nums text-slate-900">
-                        {Number(inv.total_ttc || 0).toFixed(3)}{' '}
-                        <span className="text-xs font-normal text-slate-400">TND</span>
-                      </td>
-                      <td className="px-5 py-3 text-right font-semibold tabular-nums text-cyan-700">
-                        {Number(inv.net_payable ?? inv.total_ttc ?? 0).toFixed(3)}{' '}
-                        <span className="text-xs font-normal text-slate-400">TND</span>
-                      </td>
-                      <td className="px-5 py-3">
+                      <td className="px-5 py-3.5">
                         <div className="flex items-center justify-end gap-1">
-                          {/* Voir PDF */}
-                          <button
-                            type="button"
-                            title="Aperçu PDF"
-                            aria-label={`Aperçu PDF de la facture ${inv.reference}`}
-                            onClick={() => setPdfInvoiceId(inv.id)}
-                            className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-cyan-50 hover:text-cyan-700"
-                          >
-                            <Eye className="size-3.5" />
-                          </button>
-                          {/* Règlements (total, partiel, historique) */}
-                          {inv.invoice_type === 'SALE' && inv.status !== 'CANCELLED' && (
-                            <button
-                              type="button"
-                              title={inv.status === 'PAID' ? 'Voir les règlements' : 'Enregistrer un règlement'}
-                              aria-label={`Règlements de la facture ${inv.reference}`}
+                          {isOpen && canWriteBilling && (
+                            <Button
+                              size="sm"
+                              variant="secondary"
                               onClick={() => setPaymentInvoice(inv)}
                               disabled={isLoading}
-                              className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-40"
+                              className="mr-1"
                             >
-                              <Wallet className="size-3.5" />
-                            </button>
+                              <Wallet className="size-3.5" /> Encaisser
+                            </Button>
                           )}
-                          {/* Émettre un avoir */}
-                          {inv.status !== 'CANCELLED' && inv.invoice_type === 'SALE' && (
-                            <button
-                              type="button"
-                              title="Émettre un avoir"
-                              hidden={!canWriteBilling}
-                              aria-label={`Émettre un avoir sur la facture ${inv.reference}`}
+                          <IconAction label={`Voir la facture ${inv.reference}`} onClick={() => setPdfInvoiceId(inv.id)}>
+                            <Eye className="size-4" />
+                          </IconAction>
+                          {isSale && !(isOpen && canWriteBilling) && (
+                            <IconAction
+                              label={`Règlements de la facture ${inv.reference}`}
+                              onClick={() => setPaymentInvoice(inv)}
+                              disabled={isLoading}
+                            >
+                              <Wallet className="size-4" />
+                            </IconAction>
+                          )}
+                          {isSale && !isCredited && canWriteBilling ? (
+                            <IconAction
+                              label={`Émettre un avoir sur la facture ${inv.reference}`}
                               onClick={() => handleCreditNote(inv)}
                               disabled={isLoading}
-                              className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-amber-50 hover:text-amber-600 disabled:opacity-40"
                             >
-                              <RotateCcw className="size-3.5" />
-                            </button>
+                              <RotateCcw className="size-4" />
+                            </IconAction>
+                          ) : (
+                            canWriteBilling && <span className="size-8" aria-hidden="true" />
                           )}
-                          {/* Annuler (seulement sans règlement) */}
-                          {inv.status === 'PENDING' && !(inv.amount_paid > 0) && (
-                            <button
-                              type="button"
-                              title="Annuler la facture"
-                              hidden={!canWriteBilling}
-                              aria-label={`Annuler la facture ${inv.reference}`}
+                          {inv.status === 'PENDING' && !(inv.amount_paid > 0) && !isCredited && canWriteBilling ? (
+                            <IconAction
+                              label={`Annuler la facture ${inv.reference}`}
                               onClick={() => handleStatusUpdate(inv, 'CANCELLED')}
                               disabled={isLoading}
-                              className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40"
+                              danger
                             >
-                              <XCircle className="size-3.5" />
-                            </button>
+                              <XCircle className="size-4" />
+                            </IconAction>
+                          ) : (
+                            canWriteBilling && <span className="size-8" aria-hidden="true" />
                           )}
                         </div>
                       </td>
@@ -438,6 +573,19 @@ export function InvoicesPage({ initialType = 'ALL' }) {
       </section>
 
       <AccountantExportModal open={exportOpen} onClose={() => setExportOpen(false)} />
+
+      <CreditNoteStatementModal
+        open={statementOpen}
+        onClose={() => setStatementOpen(false)}
+        clients={clients}
+      />
+
+      <InvoiceBatchPrintModal
+        invoices={invoices}
+        periodText={periodText}
+        open={batchOpen}
+        onClose={() => setBatchOpen(false)}
+      />
 
       <PaymentModal
         invoice={paymentInvoice}
