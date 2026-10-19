@@ -447,7 +447,7 @@ function MovementTypeView({ typeFilter }) {
       {showFilters && (
         <div className="rounded-xl border bg-white p-4 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <p className="text-xs font-semibold text-slate-500">
               Filtrer les mouvements
             </p>
             {hasActiveFilters && (
@@ -531,7 +531,7 @@ function MovementTypeView({ typeFilter }) {
         <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <thead className="border-b bg-slate-50 text-xs font-semibold text-slate-500">
                 <tr>
                   <th className="px-5 py-3 text-left">Date</th>
                   <th className="px-5 py-3 text-left">Réf.</th>
