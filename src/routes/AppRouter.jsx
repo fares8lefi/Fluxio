@@ -6,12 +6,11 @@ import SignupPage from '@/pages/SignupPage';
 import LoginPage from '@/pages/LoginPage';
 import ForgotPasswordPage from '@/pages/ForgotPasswordPage';
 import DashboardPage from '@/pages/DashboardPage';
-import AdminPage from '@/pages/AdminPage';
-import AcceptInvitePage from '@/pages/AcceptInvitePage';
+import PrivacyPage from '@/pages/PrivacyPage';
 
 export default function AppRouter() {
   const route = useHashRoute();
-  const { isAuthenticated, isAdmin, loading } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
     return (
@@ -19,15 +18,8 @@ export default function AppRouter() {
     );
   }
 
-  // Invitation d'un collaborateur : publique (la personne n'a pas encore de compte)
-  if (route.startsWith('#accept-invite')) return <AcceptInvitePage />;
-
-  // Admin routes: require authentication and ADMIN role
-  if (route.startsWith('#admin')) {
-    if (!isAuthenticated) return <LoginPage />;
-    if (!isAdmin) return <DashboardPage />;
-    return <AdminPage />;
-  }
+  // Politique de confidentialité : publique, connecté ou non
+  if (route === '#confidentialite') return <PrivacyPage />;
 
   // Protected routes: redirect to login if not authenticated
   if (route.startsWith('#dashboard')) {
