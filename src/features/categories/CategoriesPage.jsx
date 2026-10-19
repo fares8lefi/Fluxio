@@ -95,7 +95,7 @@ export function CategoriesPage() {
       ) : (
         <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
           <table className="w-full text-sm">
-            <thead className="border-b bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <thead className="border-b bg-slate-50 text-xs font-semibold text-slate-500">
               <tr>
                 <th className="px-5 py-3 text-left">Code</th>
                 <th className="px-5 py-3 text-left">Nom</th>
