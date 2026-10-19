@@ -2,6 +2,80 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ── Fluxio identity: « le registre du magasin » ─────────────────────────
+   The whole UI is written with Tailwind's named ramps (slate, cyan, rose,
+   indigo…). Rather than touching every class, the ramps themselves are
+   re-pitched here:
+   - slate  → mineral greys tinted toward petrol ink (paper + ink)
+   - cyan   → bleu pétrole, the brand
+   - rose   → brick red, reserved for stock-outs and destructive actions
+   - indigo → bleu encre (no violet in this product)
+   Type is a single family, Archivo; headlines and key figures use its
+   expanded width (font-stretch-expanded) instead of a second typeface. */
+@theme {
+  --font-sans: 'Archivo', ui-sans-serif, system-ui, sans-serif;
+
+  --color-slate-50: #f4f6f6;
+  --color-slate-100: #e9eded;
+  --color-slate-200: #d8dfe0;
+  --color-slate-300: #bcc7c9;
+  --color-slate-400: #8d9c9f;
+  --color-slate-500: #637477;
+  --color-slate-600: #4a5a5e;
+  --color-slate-700: #36464a;
+  --color-slate-800: #243337;
+  --color-slate-900: #15252a;
+  --color-slate-950: #0b1a1e;
+
+  --color-cyan-50: #eef8f8;
+  --color-cyan-100: #d3eeef;
+  --color-cyan-200: #a9dcdf;
+  --color-cyan-300: #72c2c8;
+  --color-cyan-400: #3ba3ac;
+  --color-cyan-500: #1d8790;
+  --color-cyan-600: #136e78;
+  --color-cyan-700: #0f5a63;
+  --color-cyan-800: #0e4a52;
+  --color-cyan-900: #0e3b43;
+  --color-cyan-950: #072429;
+
+  --color-rose-50: #fdf3f1;
+  --color-rose-100: #fbe3df;
+  --color-rose-200: #f6c6be;
+  --color-rose-300: #ee9f93;
+  --color-rose-400: #e2715f;
+  --color-rose-500: #d2453b;
+  --color-rose-600: #b9342b;
+  --color-rose-700: #9a2a23;
+  --color-rose-800: #7e2520;
+  --color-rose-900: #69231f;
+  --color-rose-950: #39100d;
+
+  --color-indigo-50: #eff4fa;
+  --color-indigo-100: #dce6f3;
+  --color-indigo-200: #bccfe8;
+  --color-indigo-300: #8faed7;
+  --color-indigo-400: #5f88c1;
+  --color-indigo-500: #3f6aa8;
+  --color-indigo-600: #30548d;
+  --color-indigo-700: #284473;
+  --color-indigo-800: #24395f;
+  --color-indigo-900: #213250;
+  --color-indigo-950: #152035;
+
+  /* Radius by hierarchy: tags 4px, controls 6–8px, panels 10px, sheets 14px */
+  --radius-xl: 0.625rem;
+  --radius-2xl: 0.875rem;
+  --radius-3xl: 1.125rem;
+
+  /* Shadows are ink-tinted and short: panels sit on paper, they don't float */
+  --shadow-xs: 0 1px 0 rgb(11 26 30 / 0.04);
+  --shadow-sm: 0 1px 2px rgb(11 26 30 / 0.06);
+  --shadow-md: 0 2px 6px -1px rgb(11 26 30 / 0.08), 0 1px 2px rgb(11 26 30 / 0.05);
+  --shadow-lg: 0 10px 24px -8px rgb(11 26 30 / 0.16);
+  --shadow-xl: 0 20px 40px -12px rgb(11 26 30 / 0.22);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -23,22 +97,22 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  /* Brand: cyan-700, same as the logo and the active sidebar item */
-  --primary: oklch(0.52 0.105 223.128);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.609 0.126 221.723); /* cyan-600 */
-  --radius: 0.625rem;
+  --background: #ffffff;
+  --foreground: #15252a;
+  /* Brand: bleu pétrole (cyan-700), same as the logo and the active nav item */
+  --primary: #0f5a63;
+  --primary-foreground: #ffffff;
+  --secondary: #e9eded;
+  --secondary-foreground: #15252a;
+  --muted: #f4f6f6;
+  --muted-foreground: #637477;
+  --accent: #eef8f8;
+  --accent-foreground: #0e4a52;
+  --destructive: #b9342b;
+  --border: #dde3e4;
+  --input: #cfd8d9;
+  --ring: #1d8790; /* cyan-500 */
+  --radius: 0.5rem;
 }
 
 .dark {
@@ -64,7 +138,26 @@
   body {
     @apply bg-background text-foreground min-h-screen font-sans antialiased;
   }
+  /* Headings get the expanded cut of Archivo; weight stays moderate so the
+     width, not the boldness, carries the voice */
+  h1,
+  h2 {
+    font-stretch: 112.5%;
+    letter-spacing: -0.015em;
+  }
+  ::selection {
+    background: #a9dcdf;
+    color: #0b1a1e;
+  }
 }
+
+/* Key figures: expanded width + tabular digits so columns of numbers align */
+@utility figure {
+  font-stretch: 125%;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
 
 /* ── Motion ───────────────────────────────────────────────────────────── */
 /* Component animations live in JS (motion/react, presets in src/lib/motion.js).
@@ -79,6 +172,13 @@
 
 /* ── Impression des documents (voir PrintPreviewModal) ───────────────────── */
 .print-only { display: none; }
+
+/* Un document occupe au moins une feuille A4 entière : 297 mm moins les marges
+   de 12 mm (aperçu : padding de la feuille ; impression : @page), moins 1 mm de
+   marge de sécurité pour ne jamais déborder sur une page blanche. La grille des
+   lignes (flex-1) absorbe la hauteur restante via sa ligne de remplissage. */
+.fiscal-doc { min-height: 272mm; }
+.fiscal-filler { height: 100%; }
 
 @media print {
   @page {
