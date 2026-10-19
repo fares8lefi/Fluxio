@@ -35,14 +35,11 @@ export function AuthProvider({ children }) {
     window.location.hash = '#login';
   };
 
-  const isAdmin = String(user?.role || '').toLowerCase() === 'admin';
-
   return (
     <AuthContext.Provider
       value={{
         user,
         isAuthenticated: !!user,
-        isAdmin,
         loading,
         // can('stock.write') … : masque les actions non autorisées pour le rôle
         can: (action) => canDo(user, action),
