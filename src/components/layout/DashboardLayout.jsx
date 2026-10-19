@@ -22,10 +22,11 @@ import {
   ReceiptText,
   FileMinus,
   Gauge,
-  ShieldCheck,
   ClipboardCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { Logo } from '@/components/ui/Logo';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 
 /**
@@ -51,16 +52,16 @@ const NAV = [
     label: 'Mouvements',
     icon: ArrowLeftRight,
     children: [
-      { id: 'movements/in', label: 'Entrées (Achats)', icon: ArrowDownLeft },
-      { id: 'movements/out', label: 'Sorties (Ventes)', icon: ArrowUpRight },
+      { id: 'movements/in', label: 'Entrées (achats)', icon: ArrowDownLeft },
+      { id: 'movements/out', label: 'Sorties (ventes)', icon: ArrowUpRight },
       {
         id: 'movements/return-supplier',
-        label: 'Retour Fournisseur',
+        label: 'Retour fournisseur',
         icon: RotateCcw,
       },
       {
         id: 'movements/return-client',
-        label: 'Retour Client',
+        label: 'Retour client',
         icon: RotateCcw,
       },
     ],
@@ -74,8 +75,8 @@ const NAV = [
     label: 'Facturation',
     icon: FileText,
     children: [
-      { id: 'invoices', label: 'Factures de Vente', icon: ReceiptText },
-      { id: 'invoices/quotes', label: 'Devis & Pro Forma', icon: FileInput },
+      { id: 'invoices', label: 'Factures de vente', icon: ReceiptText },
+      { id: 'invoices/quotes', label: 'Devis et pro forma', icon: FileInput },
       { id: 'invoices/credit-notes', label: 'Avoirs', icon: FileMinus },
     ],
   },
@@ -106,6 +107,9 @@ const containsSub = (item, sub) =>
 
 const FOCUS_RING =
   'focus-visible:ring-2 focus-visible:ring-cyan-600 focus-visible:outline-none';
+// Same ring, legible on the ink sidebar
+const FOCUS_RING_INK =
+  'focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:outline-none';
 
 function NavItem({ item, currentSub, onNavigate, depth = 0 }) {
   const hasActiveChild = containsSub(item, currentSub);
@@ -132,14 +136,14 @@ function NavItem({ item, currentSub, onNavigate, depth = 0 }) {
             if (item.children) setOpen(true);
           }}
           aria-current={isCurrent ? 'page' : undefined}
-          className={`relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${FOCUS_RING} ${
-            depth > 0 ? 'pl-9' : ''
+          className={`relative flex w-full items-center gap-3 rounded-md px-3 text-sm transition-colors ${FOCUS_RING_INK} ${
+            depth > 0 ? 'py-1.5 pl-9' : 'py-2'
           } ${item.children ? 'pr-10' : ''} ${
             isCurrent
-              ? 'text-cyan-800'
+              ? 'font-semibold text-white'
               : hasActiveChild
-                ? 'text-slate-950'
-                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'
+                ? 'font-medium text-white'
+                : 'font-medium text-cyan-100/70 hover:bg-white/5 hover:text-white'
           }`}
         >
           {/* Active highlight glides between items (shared layoutId) */}
@@ -147,7 +151,7 @@ function NavItem({ item, currentSub, onNavigate, depth = 0 }) {
             <motion.span
               layoutId="nav-active"
               aria-hidden="true"
-              className="absolute inset-0 rounded-lg bg-cyan-50"
+              className="absolute inset-0 rounded-md bg-white/10 shadow-[inset_3px_0_0_var(--color-cyan-300)]"
               transition={SPRING_SOFT}
             />
           )}
@@ -164,7 +168,7 @@ function NavItem({ item, currentSub, onNavigate, depth = 0 }) {
             onClick={() => setOpen((o) => !o)}
             aria-expanded={open}
             aria-label={`${open ? 'Replier' : 'Déplier'} ${item.label}`}
-            className={`absolute right-1 grid size-7 place-items-center rounded-md text-slate-400 transition hover:bg-slate-200/60 hover:text-slate-700 ${FOCUS_RING}`}
+            className={`absolute right-1 grid size-7 place-items-center rounded-md text-cyan-100/50 transition hover:bg-white/10 hover:text-white ${FOCUS_RING_INK}`}
           >
             <ChevronRight
               className={`size-3.5 transition-transform ${open ? 'rotate-90' : ''}`}
@@ -174,7 +178,7 @@ function NavItem({ item, currentSub, onNavigate, depth = 0 }) {
       </div>
 
       {item.children && open && (
-        <div className="relative mt-0.5 space-y-0.5 before:absolute before:top-1 before:bottom-1 before:left-5 before:w-px before:bg-slate-200">
+        <div className="relative mt-0.5 space-y-0.5 before:absolute before:top-1 before:bottom-1 before:left-5 before:w-px before:bg-white/10">
           {item.children.map((child) => (
             <NavItem
               key={child.id}
@@ -190,26 +194,14 @@ function NavItem({ item, currentSub, onNavigate, depth = 0 }) {
   );
 }
 
-function Logo({ small = false }) {
-  return (
-    <span className="flex items-center gap-2 font-semibold">
-      <span
-        className={`inline-grid place-items-center bg-cyan-700 text-xs text-white ${
-          small ? 'size-6 rounded-md' : 'size-7 rounded-lg'
-        }`}
-      >
-        F
-      </span>
-      Fluxio
-    </span>
-  );
-}
-
 function UserAvatar({ user, className = 'size-8 text-sm' }) {
   return (
     <span
       aria-hidden="true"
-      className={`flex shrink-0 items-center justify-center rounded-full bg-cyan-100 font-semibold text-cyan-800 ${className}`}
+      className={cn(
+        'flex shrink-0 items-center justify-center rounded-full bg-cyan-100 font-semibold text-cyan-800',
+        className
+      )}
     >
       {user?.username?.charAt(0).toUpperCase() || 'U'}
     </span>
@@ -218,26 +210,26 @@ function UserAvatar({ user, className = 'size-8 text-sm' }) {
 
 /** Sidebar content — shared by the desktop aside and the mobile drawer */
 function Sidebar({ currentSub, onNavigate, onClose }) {
-  const { user, isAdmin, logout, can } = useAuth();
+  const { user, logout, can } = useAuth();
 
   return (
     <>
       {/* Logo */}
-      <div className="flex h-16 shrink-0 items-center justify-between border-b px-6">
+      <div className="flex h-16 shrink-0 items-center justify-between px-6">
         <button
           type="button"
           onClick={() => onNavigate('')}
-          aria-label="Fluxio — Accueil"
-          className={`rounded-md ${FOCUS_RING}`}
+          aria-label="Fluxio, accueil"
+          className={`rounded-md ${FOCUS_RING_INK}`}
         >
-          <Logo />
+          <Logo ink />
         </button>
         {onClose && (
           <button
             type="button"
             onClick={onClose}
             aria-label="Fermer le menu"
-            className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            className={`grid size-8 place-items-center rounded-md text-cyan-100/60 hover:bg-white/10 hover:text-white ${FOCUS_RING_INK}`}
           >
             <X className="size-4" />
           </button>
@@ -245,7 +237,7 @@ function Sidebar({ currentSub, onNavigate, onClose }) {
       </div>
 
       {/* Nav */}
-      <div className="flex-1 overflow-auto py-4">
+      <div className="flex-1 overflow-auto py-3">
         {/* One layout group per sidebar instance (desktop / mobile drawer) */}
         <LayoutGroup id={onClose ? 'sidebar-mobile' : 'sidebar-desktop'}>
           <nav aria-label="Navigation principale" className="grid gap-0.5 px-3">
@@ -257,55 +249,37 @@ function Sidebar({ currentSub, onNavigate, onClose }) {
                 onNavigate={onNavigate}
               />
             ))}
-
-            {isAdmin && (
-              <div className="mt-2 border-t border-slate-100 pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    window.location.hash = '#admin';
-                    onClose?.();
-                  }}
-                  className="flex w-full items-center gap-3 rounded-lg bg-indigo-50/70 px-3 py-2 text-sm font-medium text-indigo-700 transition hover:bg-indigo-100"
-                >
-                  <ShieldCheck className="size-4 shrink-0 text-indigo-600" />
-                  <span className="flex-1 text-left">Administration</span>
-                  <span className="rounded bg-indigo-200 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-indigo-800 uppercase">
-                    Admin
-                  </span>
-                </button>
-              </div>
-            )}
           </nav>
         </LayoutGroup>
       </div>
 
       {/* User footer */}
-      <div className="border-t p-4">
+      <div className="flex items-center gap-1 border-t border-white/10 p-3">
         <button
           type="button"
           onClick={() => onNavigate('settings')}
           title="Paramètres du compte"
-          className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition hover:bg-slate-50 ${FOCUS_RING}`}
+          className={`flex min-w-0 flex-1 items-center gap-3 rounded-md px-2 py-2 text-left transition hover:bg-white/5 ${FOCUS_RING_INK}`}
         >
-          <UserAvatar user={user} />
+          <UserAvatar user={user} className="size-8 text-sm bg-cyan-300 text-cyan-950" />
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm leading-none font-medium">
+            <span className="block truncate text-sm leading-none font-medium text-white">
               {user?.username}
             </span>
-            <span className="mt-1 block truncate text-xs text-slate-500">
+            <span className="mt-1 block truncate text-xs text-cyan-100/60">
               {user?.company_name}
             </span>
           </span>
         </button>
-        <Button
-          variant="ghost"
-          className="mt-2 w-full justify-start text-slate-600 hover:bg-rose-50 hover:text-rose-600"
+        <button
+          type="button"
           onClick={logout}
+          aria-label="Se déconnecter"
+          title="Se déconnecter"
+          className={`grid size-9 shrink-0 place-items-center rounded-md text-cyan-100/60 transition hover:bg-white/10 hover:text-white ${FOCUS_RING_INK}`}
         >
-          <LogOut className="mr-2 size-4" />
-          Déconnexion
-        </Button>
+          <LogOut className="size-4" />
+        </button>
       </div>
     </>
   );
@@ -411,7 +385,7 @@ export function DashboardLayout({ children, currentSub, onNavigate }) {
       </a>
 
       {/* Desktop sidebar — stays in view while the page scrolls */}
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r bg-white lg:flex">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col bg-cyan-900 lg:flex">
         <Sidebar currentSub={activeSub} onNavigate={navigate} />
       </aside>
 
@@ -438,7 +412,7 @@ export function DashboardLayout({ children, currentSub, onNavigate }) {
                 x: '-100%',
                 transition: { duration: DURATION.fast, ease: 'easeIn' },
               }}
-              className="absolute top-0 left-0 flex h-full w-72 max-w-[85vw] flex-col border-r bg-white shadow-xl"
+              className="absolute top-0 left-0 flex h-full w-72 max-w-[85vw] flex-col bg-cyan-900 shadow-xl"
             >
               <Sidebar
                 currentSub={activeSub}
@@ -453,7 +427,7 @@ export function DashboardLayout({ children, currentSub, onNavigate }) {
       {/* Main */}
       <main className="flex min-h-screen min-w-0 flex-1 flex-col">
         {/* Top bar — breadcrumb on desktop, menu + logo on mobile */}
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-white/85 px-5 backdrop-blur sm:px-10">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-slate-50/90 px-5 backdrop-blur sm:px-10">
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
