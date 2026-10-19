@@ -10,20 +10,20 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90',
+          'bg-primary text-primary-foreground shadow-xs hover:bg-cyan-800',
         destructive:
           'bg-destructive text-white shadow-xs hover:bg-destructive/90',
         outline:
           'border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground',
         secondary:
-          'bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80',
+          'bg-cyan-50 text-cyan-800 hover:bg-cyan-100',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
         default: 'h-9 px-4 py-2',
         sm: 'h-8 rounded-md gap-1.5 px-3',
-        lg: 'h-10 rounded-md px-6',
+        lg: 'h-10 rounded-md px-5',
         icon: 'size-9',
       },
     },
