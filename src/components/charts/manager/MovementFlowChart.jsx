@@ -13,14 +13,21 @@ function FlowTooltip({ active, payload, label }) {
       <div className="space-y-1 tabular-nums">
         <div className="flex items-center justify-between gap-4">
           <span className="flex items-center gap-1.5 text-slate-500">
-            <span className="size-2.5 rounded-full" style={{ backgroundColor: CHART_COLORS.emerald }} />
-            Mouvements
+            <span className="size-2.5 rounded-full" style={{ backgroundColor: CHART_COLORS.cyan }} />
+            Entrées (achats)
           </span>
-          <strong className="text-slate-900">{point.movements}</strong>
+          <strong className="text-slate-900">{formatMoney(point.in_amount)}</strong>
+        </div>
+        <div className="flex items-center justify-between gap-4">
+          <span className="flex items-center gap-1.5 text-slate-500">
+            <span className="size-2.5 rounded-full" style={{ backgroundColor: CHART_COLORS.emerald }} />
+            Sorties (ventes)
+          </span>
+          <strong className="text-slate-900">{formatMoney(point.out_amount)}</strong>
         </div>
         <div className="flex items-center justify-between gap-4 border-t pt-1">
-          <span className="text-slate-500">Montant total</span>
-          <strong className="text-slate-900">{formatMoney(point.amount)}</strong>
+          <span className="text-slate-500">Mouvements, tous types</span>
+          <strong className="text-slate-900">{point.movements}</strong>
         </div>
       </div>
     </div>
@@ -28,8 +35,9 @@ function FlowTooltip({ active, payload, label }) {
 }
 
 /**
- * Flux de mouvements sur 12 mois (nombre + montant).
- * @param {{ monthly_activity?: Array<{month: string, label: string, movements: number, amount: number}> }} props
+ * Valeur HT des entrées et des sorties de stock sur 12 mois. Le nombre de
+ * mouvements n'est que dans l'infobulle : il ne partage pas l'échelle des dinars.
+ * @param {{ monthlyActivity?: Array<{month, label, movements, in_amount, out_amount}> }} props
  */
 export function MovementFlowChart({ monthlyActivity = [], isLoading = false }) {
   const hasData = monthlyActivity.some((row) => Number(row.movements) > 0);
@@ -38,8 +46,8 @@ export function MovementFlowChart({ monthlyActivity = [], isLoading = false }) {
     <ChartFrame
       icon={ArrowLeftRight}
       tone="emerald"
-      title="Flux de mouvements de stock (12 mois)"
-      subtitle="Nombre de mouvements et montant associé, mouvements annulés exclus."
+      title="Entrées et sorties de stock (12 mois)"
+      subtitle="Valeur HT des réceptions et des sorties, mouvements annulés exclus."
       isLoading={isLoading}
       isEmpty={!hasData}
       emptyLabel="Aucun mouvement de stock sur les 12 derniers mois."
@@ -48,18 +56,18 @@ export function MovementFlowChart({ monthlyActivity = [], isLoading = false }) {
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={monthlyActivity} margin={{ top: 5, right: 15, left: -5, bottom: 0 }}>
           <CartesianGrid {...gridStroke} />
-          <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: '#cbd5e1' }} tick={axisTick} />
-          <YAxis tickLine={false} axisLine={false} tick={axisTick} tickFormatter={formatCompact} width={46} allowDecimals={false} />
-          <Tooltip content={<FlowTooltip />} cursor={{ fill: '#f8fafc' }} />
+          <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: '#d8dfe0' }} tick={axisTick} />
+          <YAxis tickLine={false} axisLine={false} tick={axisTick} tickFormatter={formatCompact} width={46} />
+          <Tooltip content={<FlowTooltip />} cursor={{ fill: '#f4f6f6' }} />
           <Legend
             verticalAlign="top"
             align="right"
             height={28}
             iconType="circle"
-            wrapperStyle={{ fontSize: 11, color: '#64748b' }}
+            wrapperStyle={{ fontSize: 11, color: '#637477' }}
           />
-          <Bar dataKey="movements" name="Mouvements" fill={CHART_COLORS.emerald} radius={[6, 6, 0, 0]} maxBarSize={26} />
-          <Bar dataKey="amount" name="Montant" fill={CHART_COLORS.cyan} radius={[6, 6, 0, 0]} maxBarSize={26} />
+          <Bar dataKey="in_amount" name="Entrées (achats)" fill={CHART_COLORS.cyan} radius={[6, 6, 0, 0]} maxBarSize={26} />
+          <Bar dataKey="out_amount" name="Sorties (ventes)" fill={CHART_COLORS.emerald} radius={[6, 6, 0, 0]} maxBarSize={26} />
         </BarChart>
       </ResponsiveContainer>
     </ChartFrame>
