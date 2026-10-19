@@ -39,6 +39,27 @@ export const getAllInvoices = async (filters = {}) => {
   }
 };
 
+/**
+ * Toutes les factures d'une période, sans limite de page : l'API pagine
+ * (taille fixée côté serveur), on lit la première page puis les suivantes.
+ * @param {{ from: string, to: string }} range — dates AAAA-MM-JJ incluses
+ * @param {object} [filters] — invoice_type, status…
+ */
+export const getInvoicesInRange = async ({ from, to }, filters = {}) => {
+  // Heure explicite des deux côtés : la date de fin inclut toute la journée
+  const base = { ...filters, startDate: `${from}T00:00:00`, endDate: `${to}T23:59:59.999` };
+  const first = await getAllInvoices({ ...base, page: 1 });
+  const invoices = first?.invoices ?? [];
+  const count = first?.count ?? invoices.length;
+  if (invoices.length === 0 || invoices.length >= count) return { invoices, count };
+
+  const pages = Math.ceil(count / invoices.length);
+  const rest = await Promise.all(
+    Array.from({ length: pages - 1 }, (_, i) => getAllInvoices({ ...base, page: i + 2 }))
+  );
+  return { invoices: invoices.concat(...rest.map((r) => r?.invoices ?? [])), count };
+};
+
 /** Récupère les données complètes d'une facture pour générer le PDF */
 export const getInvoicePdfData = (id) => request(`${BASE}/getInvoiceDataForPdf/${id}`);
 
