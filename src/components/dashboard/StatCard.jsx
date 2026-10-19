@@ -43,31 +43,29 @@ export function StatCard({
   return (
     <motion.div
       variants={fadeUpItem}
-      whileHover={{ y: -2 }}
-      transition={{ duration: 0.2 }}
-      className="rounded-xl border bg-white shadow-sm transition-shadow hover:shadow-md"
+      className="rounded-xl border bg-white"
     >
       <div
         className={`flex items-center gap-2.5 ${size === 'sm' ? 'p-3' : 'p-5 pb-3'}`}
       >
         <span
-          className={`grid shrink-0 place-items-center rounded-lg ${palette.icon} ${size === 'sm' ? 'size-8' : 'size-9'}`}
+          className={`grid shrink-0 place-items-center rounded-md ${palette.icon} ${size === 'sm' ? 'size-7' : 'size-8'}`}
         >
           <Icon className="size-4" aria-hidden="true" />
         </span>
-        <span className="truncate text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
+        <span className="truncate text-sm text-slate-500">
           {label}
         </span>
         {trailing && <span className="ml-auto shrink-0">{trailing}</span>}
       </div>
       <div className={size === 'sm' ? 'px-3 pb-3' : 'px-5 pb-4'}>
         <p
-          className={`font-bold tabular-nums ${palette.value} ${size === 'sm' ? 'text-lg' : 'text-xl'}`}
+          className={`figure font-semibold ${palette.value} ${size === 'sm' ? 'text-lg' : 'text-2xl'}`}
         >
           <AnimatedNumber value={value} />
           {unit && <span className="ml-1 text-xs font-normal text-slate-400">{unit}</span>}
         </p>
-        {hint && <p className="mt-0.5 text-[11px] text-slate-500">{hint}</p>}
+        {hint && <p className="mt-0.5 text-xs text-slate-500">{hint}</p>}
       </div>
     </motion.div>
   );
