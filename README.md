@@ -2,335 +2,335 @@
 
 # Fluxio — Frontend
 
-**Gestion de stock, de catalogue, de clients et de facturation pour les PME.**
+**Inventory, product catalog, customer and invoicing management for small and medium businesses.**
 
 ![React](https://img.shields.io/badge/React-19-149eca?logo=react&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646cff?logo=vite&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06b6d4?logo=tailwindcss&logoColor=white)
 ![Node](https://img.shields.io/badge/Node.js-%E2%89%A520-339933?logo=nodedotjs&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-ready-2496ed?logo=docker&logoColor=white)
-![Statut](https://img.shields.io/badge/statut-MVP-0e7490)
+![Status](https://img.shields.io/badge/status-MVP-0e7490)
 
 </div>
 
 ---
 
-## Sommaire
+## Table of Contents
 
-- [Présentation](#présentation)
-- [Fonctionnalités](#fonctionnalités)
-- [Stack technique](#stack-technique)
-- [Prérequis](#prérequis)
-- [Installation et démarrage](#installation-et-démarrage)
+- [Overview](#overview)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Prerequisites](#prerequisites)
+- [Getting Started](#getting-started)
 - [Configuration](#configuration)
-- [Scripts disponibles](#scripts-disponibles)
-- [Architecture du projet](#architecture-du-projet)
-- [Routage](#routage)
-- [Rôles et permissions](#rôles-et-permissions)
-- [Communication avec l’API](#communication-avec-lapi)
-- [Déploiement avec Docker](#déploiement-avec-docker)
-- [Sécurité](#sécurité)
-- [Conventions de code](#conventions-de-code)
-- [Principes d’interface](#principes-dinterface)
-- [Contribuer](#contribuer)
+- [Available Scripts](#available-scripts)
+- [Project Structure](#project-structure)
+- [Routing](#routing)
+- [Roles and Permissions](#roles-and-permissions)
+- [API Communication](#api-communication)
+- [Docker Deployment](#docker-deployment)
+- [Security](#security)
+- [Code Conventions](#code-conventions)
+- [UI Principles](#ui-principles)
+- [Contributing](#contributing)
 
 ---
 
-## Présentation
+## Overview
 
-**Fluxio** est une application web de gestion destinée aux petites et moyennes entreprises. Elle centralise le catalogue produits, les mouvements de stock, les partenaires (clients et fournisseurs) et le cycle de facturation, dans le respect des règles fiscales tunisiennes (TVA, timbre fiscal, matricule fiscal, montants en dinars avec 3 décimales).
+**Fluxio** is a web-based management application for small and medium businesses. It brings together the product catalog, stock movements, business partners (customers and suppliers) and the invoicing cycle, in compliance with Tunisian tax rules (VAT, fiscal stamp, tax ID, amounts in dinars with 3 decimal places).
 
-Ce dépôt contient l’**interface web (SPA React)**. Elle s’appuie sur l’API Fluxio (Node.js, Express, Prisma, MySQL), qui reste l’autorité pour l’authentification, l’isolation des données par entreprise et tous les calculs faisant foi.
+This repository contains the **web interface (React SPA)**. It relies on the Fluxio API (Node.js, Express, Prisma, MySQL), which remains the source of truth for authentication, per-company data isolation and all authoritative calculations.
 
-> Le produit est gratuit pendant la phase MVP. Cette phase sert à recueillir les retours des premiers utilisateurs et à valider les fonctionnalités avant d’envisager une offre payante.
-
----
-
-## Fonctionnalités
-
-### Authentification et comptes
-
-- Inscription en plusieurs étapes : informations personnelles, entreprise, identifiants, vérification par code OTP
-- Connexion par JWT stocké en cookie, avec rafraîchissement automatique de la session
-- Réinitialisation du mot de passe
-- Comptes entreprise isolés (architecture multi-tenant côté API)
-
-### Catalogue et stock
-
-- Produits, catégories et fournisseurs
-- Mouvements de stock : entrées (achats), sorties (ventes), retours fournisseur et retours client
-- Inventaire et alertes de stock (seuil bas, rupture)
-- Tableau de bord : santé du stock, évolution, produits critiques et derniers mouvements
-
-### Ventes et facturation
-
-- Répertoire clients
-- Devis, conversion de devis en facture
-- Génération de factures à partir des mouvements facturables
-- Avoirs et relevés d’avoirs
-- Suivi des règlements (paiements partiels ou complets)
-- Impression et aperçu PDF des documents fiscaux, impression par lot
-
-### Pilotage et exports
-
-- Tableau de bord gérant : chiffre d’affaires, marges par catégorie, valeur du stock, flux de mouvements, encaissements, meilleurs clients, filtrage par période
-- Exports CSV pour le comptable : journal des ventes, récapitulatif de TVA, mouvements, produits, clients
-- Neutralisation des formules dans les exports CSV (protection contre l’injection de formules dans les tableurs)
-
-### Paramètres
-
-- Fiche entreprise (identité fiscale, coordonnées) avec indicateur de complétude
-- Gestion des rôles de l’équipe
+> The product is free during the MVP phase. This phase is used to gather feedback from early users and validate features before considering a paid offering.
 
 ---
 
-## Stack technique
+## Features
 
-| Domaine            | Outils                                                        |
-| ------------------ | ------------------------------------------------------------- |
-| Framework UI       | [React 19](https://react.dev)                                 |
-| Build et dev       | [Vite 8](https://vite.dev)                                    |
-| Styles             | [Tailwind CSS v4](https://tailwindcss.com), `tailwind-merge`, `clsx` |
-| Composants         | [shadcn/ui](https://ui.shadcn.com), Radix UI, `class-variance-authority` |
-| Icônes             | [Lucide](https://lucide.dev)                                  |
-| Formulaires        | [React Hook Form](https://react-hook-form.com)                |
-| Graphiques         | [Recharts](https://recharts.org)                              |
-| Animations         | [Motion](https://motion.dev)                                  |
-| Qualité de code    | [Oxlint](https://oxc.rs), [Prettier](https://prettier.io) (+ plugin Tailwind) |
-| Production         | Docker multi-étapes, Nginx (Alpine)                           |
+### Authentication and Accounts
+
+- Multi-step sign-up: personal details, company, credentials, OTP code verification
+- Login with a JWT stored in a cookie, with automatic session refresh
+- Password reset
+- Isolated company accounts (multi-tenant architecture on the API side)
+
+### Catalog and Stock
+
+- Products, categories and suppliers
+- Stock movements: stock in (purchases), stock out (sales), supplier returns and customer returns
+- Inventory and stock alerts (low threshold, out of stock)
+- Dashboard: stock health, trends, critical products and latest movements
+
+### Sales and Invoicing
+
+- Customer directory
+- Quotes, and quote-to-invoice conversion
+- Invoice generation from invoiceable movements
+- Credit notes and credit note statements
+- Payment tracking (partial or full payments)
+- Printing and PDF preview of fiscal documents, batch printing
+
+### Reporting and Exports
+
+- Manager dashboard: revenue, margin by category, stock value, movement flow, collections, top customers, period filtering
+- CSV exports for the accountant: sales journal, VAT summary, movements, products, customers
+- Formula neutralization in CSV exports (protection against spreadsheet formula injection)
+
+### Settings
+
+- Company profile (tax identity, contact details) with a completeness indicator
+- Team role management
 
 ---
 
-## Prérequis
+## Tech Stack
 
-- **Node.js 20** ou version ultérieure (l’image Docker utilise Node 22)
-- **npm** (fourni avec Node.js)
-- Une instance de l’**API Fluxio** accessible (par défaut sur `http://localhost:3000`)
-- *Optionnel* : **Docker** pour construire l’image de production
+| Area              | Tools                                                                     |
+| ----------------- | ------------------------------------------------------------------------- |
+| UI framework      | [React 19](https://react.dev)                                             |
+| Build and dev     | [Vite 8](https://vite.dev)                                                |
+| Styling           | [Tailwind CSS v4](https://tailwindcss.com), `tailwind-merge`, `clsx`      |
+| Components        | [shadcn/ui](https://ui.shadcn.com), Radix UI, `class-variance-authority`  |
+| Icons             | [Lucide](https://lucide.dev)                                              |
+| Forms             | [React Hook Form](https://react-hook-form.com)                            |
+| Charts            | [Recharts](https://recharts.org)                                          |
+| Animations        | [Motion](https://motion.dev)                                              |
+| Code quality      | [Oxlint](https://oxc.rs), [Prettier](https://prettier.io) (+ Tailwind plugin) |
+| Production        | Multi-stage Docker build, Nginx (Alpine)                                  |
 
 ---
 
-## Installation et démarrage
+## Prerequisites
+
+- **Node.js 20** or later (the Docker image uses Node 22)
+- **npm** (bundled with Node.js)
+- A reachable instance of the **Fluxio API** (defaults to `http://localhost:3000`)
+- *Optional*: **Docker** to build the production image
+
+---
+
+## Getting Started
 
 ```bash
-# 1. Cloner le dépôt
+# 1. Clone the repository
 git clone https://github.com/fares8lefi/Fluxio.git
 cd Fluxio
 
-# 2. Installer les dépendances
+# 2. Install dependencies
 npm install
 
-# 3. Configurer l'environnement
+# 3. Set up the environment
 cp .env.example .env
 
-# 4. Lancer le serveur de développement
+# 4. Start the development server
 npm run dev
 ```
 
-L’application est disponible à l’adresse affichée par Vite, généralement **http://localhost:5173**.
+The app is available at the address printed by Vite, usually **http://localhost:5173**.
 
-> L’API doit autoriser l’origine du frontend (CORS avec `credentials`), car l’authentification repose sur des cookies.
+> The API must allow the frontend's origin (CORS with `credentials`), since authentication relies on cookies.
 
 ---
 
 ## Configuration
 
-Les variables d’environnement sont lues par Vite au moment du build. Seules les variables préfixées par `VITE_` sont exposées au navigateur : n’y placez **jamais** de secret.
+Environment variables are read by Vite at build time. Only variables prefixed with `VITE_` are exposed to the browser: **never** put secrets in them.
 
-| Variable       | Description                     | Valeur par défaut       |
-| -------------- | ------------------------------- | ----------------------- |
-| `VITE_API_URL` | URL de base de l’API Fluxio     | `http://localhost:3000` |
+| Variable       | Description                   | Default                 |
+| -------------- | ----------------------------- | ----------------------- |
+| `VITE_API_URL` | Base URL of the Fluxio API    | `http://localhost:3000` |
 
-Les fichiers `.env` et `.env.*` sont ignorés par Git et Docker ; seul `.env.example` est versionné.
-
----
-
-## Scripts disponibles
-
-| Commande               | Description                                         |
-| ---------------------- | --------------------------------------------------- |
-| `npm run dev`          | Lance le serveur de développement avec rechargement à chaud |
-| `npm run build`        | Génère la version de production dans `dist/`        |
-| `npm run preview`      | Sert localement le build de production              |
-| `npm run lint`         | Analyse le code avec Oxlint                         |
-| `npm run format`       | Formate le code avec Prettier                       |
-| `npm run format:check` | Vérifie le formatage sans modifier les fichiers     |
+`.env` and `.env.*` files are ignored by Git and Docker; only `.env.example` is versioned.
 
 ---
 
-## Architecture du projet
+## Available Scripts
 
-L’alias `@` pointe vers `src/` (configuré dans `vite.config.js` et `jsconfig.json`).
+| Command                | Description                                   |
+| ---------------------- | --------------------------------------------- |
+| `npm run dev`          | Starts the development server with hot reload |
+| `npm run build`        | Builds the production bundle into `dist/`     |
+| `npm run preview`      | Serves the production build locally           |
+| `npm run lint`         | Lints the code with Oxlint                    |
+| `npm run format`       | Formats the code with Prettier                |
+| `npm run format:check` | Checks formatting without modifying files     |
+
+---
+
+## Project Structure
+
+The `@` alias points to `src/` (configured in `vite.config.js` and `jsconfig.json`).
 
 ```text
 src/
-├── assets/            # Images et ressources statiques
+├── assets/            # Images and static resources
 ├── components/
-│   ├── auth/          # Étapes du parcours d'inscription et champs de formulaire
-│   ├── charts/        # Graphiques du tableau de bord (et manager/ pour la vue gérant)
-│   ├── dashboard/     # Cartes de statistiques, derniers mouvements
-│   ├── landing/       # Éléments de la page d'accueil
-│   ├── layout/        # Layouts (tableau de bord, en-tête public)
-│   ├── print/         # Documents fiscaux imprimables et aperçu d'impression
-│   └── ui/            # Composants génériques (Modal, Toast, Button, Skeleton…)
-├── constants/         # Constantes (URL de l'API, contenus statiques)
-├── contexts/          # AuthContext : session et permissions de l'utilisateur
-├── features/          # Modules métier, un dossier par domaine
+│   ├── auth/          # Sign-up flow steps and form fields
+│   ├── charts/        # Dashboard charts (and manager/ for the manager view)
+│   ├── dashboard/     # Stat cards, latest movements
+│   ├── landing/       # Landing page elements
+│   ├── layout/        # Layouts (dashboard, public header)
+│   ├── print/         # Printable fiscal documents and print preview
+│   └── ui/            # Generic components (Modal, Toast, Button, Skeleton…)
+├── constants/         # Constants (API URL, static content)
+├── contexts/          # AuthContext: user session and permissions
+├── features/          # Business modules, one folder per domain
 │   ├── categories/
 │   ├── clients/
 │   ├── inventory/
-│   ├── invoices/      # Factures, devis, avoirs, règlements, exports
-│   ├── manager/       # Tableau de bord gérant
-│   ├── movements/     # Mouvements de stock
+│   ├── invoices/      # Invoices, quotes, credit notes, payments, exports
+│   ├── manager/       # Manager dashboard
+│   ├── movements/     # Stock movements
 │   ├── products/
 │   ├── settings/
 │   └── suppliers/
-├── hooks/             # Hooks partagés (useHashRoute…)
-├── lib/               # Utilitaires : fiscalité, permissions, animations, helpers
-├── pages/             # Pages de premier niveau (accueil, connexion, tableau de bord…)
-├── routes/            # AppRouter : aiguillage public / protégé
-├── services/          # Appels à l'API, un service par ressource
+├── hooks/             # Shared hooks (useHashRoute…)
+├── lib/               # Utilities: tax helpers, permissions, animations, helpers
+├── pages/             # Top-level pages (landing, login, dashboard…)
+├── routes/            # AppRouter: public / protected routing
+├── services/          # API calls, one service per resource
 ├── App.jsx
-├── index.css          # Point d'entrée Tailwind et thème
-└── main.jsx           # Point d'entrée de l'application
+├── index.css          # Tailwind entry point and theme
+└── main.jsx           # Application entry point
 ```
 
-**Principe d’organisation** : le code métier vit dans `features/<domaine>/`, les composants réutilisables dans `components/`, et tout accès réseau passe par `services/`.
+**Organizing principle**: business code lives in `features/<domain>/`, reusable components in `components/`, and all network access goes through `services/`.
 
 ---
 
-## Routage
+## Routing
 
-L’application utilise un routage par **hash** (`useHashRoute`), ce qui la rend compatible avec n’importe quel hébergement statique.
+The app uses **hash-based** routing (`useHashRoute`), which makes it compatible with any static host.
 
-| Route                               | Accès     | Contenu                              |
-| ----------------------------------- | --------- | ------------------------------------ |
-| `#` (défaut)                        | Public    | Page d’accueil                       |
-| `#login`, `#signup`, `#forgot-password` | Public | Authentification (redirige vers le tableau de bord si connecté) |
-| `#confidentialite`                  | Public    | Politique de confidentialité         |
-| `#dashboard`                        | Protégé   | Tableau de bord                      |
-| `#dashboard/products`               | Protégé   | Produits                             |
-| `#dashboard/categories`             | Protégé   | Catégories                           |
-| `#dashboard/suppliers`              | Protégé   | Fournisseurs                         |
-| `#dashboard/inventory`              | Protégé   | Inventaire                           |
-| `#dashboard/movements`              | Protégé   | Tous les mouvements                  |
-| `#dashboard/movements/in` (`achats`)   | Protégé | Entrées de stock                   |
-| `#dashboard/movements/out` (`ventes`)  | Protégé | Sorties de stock                   |
-| `#dashboard/movements/return-supplier` | Protégé | Retours fournisseur                |
-| `#dashboard/movements/return-client`   | Protégé | Retours client                     |
-| `#dashboard/clients`                | Protégé   | Clients                              |
-| `#dashboard/invoices`               | Protégé   | Factures                             |
-| `#dashboard/invoices/quotes`        | Protégé   | Devis                                |
-| `#dashboard/invoices/credit-notes`  | Protégé   | Avoirs                               |
-| `#dashboard/manager`                | Protégé   | Tableau de bord gérant               |
-| `#dashboard/settings`, `#dashboard/settings/company` | Protégé | Paramètres                |
+| Route                                                | Access    | Content                                         |
+| ---------------------------------------------------- | --------- | ----------------------------------------------- |
+| `#` (default)                                        | Public    | Landing page                                    |
+| `#login`, `#signup`, `#forgot-password`              | Public    | Authentication (redirects to dashboard if logged in) |
+| `#confidentialite`                                   | Public    | Privacy policy                                  |
+| `#dashboard`                                         | Protected | Dashboard                                       |
+| `#dashboard/products`                                | Protected | Products                                        |
+| `#dashboard/categories`                              | Protected | Categories                                      |
+| `#dashboard/suppliers`                               | Protected | Suppliers                                       |
+| `#dashboard/inventory`                               | Protected | Inventory                                       |
+| `#dashboard/movements`                               | Protected | All movements                                   |
+| `#dashboard/movements/in` (`achats`)                 | Protected | Stock in                                        |
+| `#dashboard/movements/out` (`ventes`)                | Protected | Stock out                                       |
+| `#dashboard/movements/return-supplier`               | Protected | Supplier returns                                |
+| `#dashboard/movements/return-client`                 | Protected | Customer returns                                |
+| `#dashboard/clients`                                 | Protected | Customers                                       |
+| `#dashboard/invoices`                                | Protected | Invoices                                        |
+| `#dashboard/invoices/quotes`                         | Protected | Quotes                                          |
+| `#dashboard/invoices/credit-notes`                   | Protected | Credit notes                                    |
+| `#dashboard/manager`                                 | Protected | Manager dashboard                               |
+| `#dashboard/settings`, `#dashboard/settings/company` | Protected | Settings                                        |
 
 ---
 
-## Rôles et permissions
+## Roles and Permissions
 
-Chaque utilisateur possède un rôle au sein de son entreprise. Le module `src/lib/permissions.js` reflète les règles du backend afin de **masquer** les actions non autorisées ; **le backend reste l’autorité** et refuse toute requête non permise.
+Each user has a role within their company. The `src/lib/permissions.js` module mirrors the backend rules in order to **hide** unauthorized actions; **the backend remains the authority** and rejects any request that is not allowed.
 
-| Action           | Gérant (`OWNER`) | Magasinier (`STOCK`) | Comptable (`ACCOUNTANT`) |
-| ---------------- | :--------------: | :------------------: | :----------------------: |
-| `stock.write`    | ✅               | ✅                   | —                        |
-| `billing.write`  | ✅               | —                    | ✅                       |
-| `finance.read`   | ✅               | —                    | ✅                       |
-| `company.manage` | ✅               | —                    | —                        |
+| Action           | Manager (`OWNER`) | Storekeeper (`STOCK`) | Accountant (`ACCOUNTANT`) |
+| ---------------- | :---------------: | :-------------------: | :-----------------------: |
+| `stock.write`    | ✅                | ✅                    | —                         |
+| `billing.write`  | ✅                | —                     | ✅                        |
+| `finance.read`   | ✅                | —                     | ✅                        |
+| `company.manage` | ✅                | —                     | —                         |
 
 ```jsx
 const { can } = useAuth();
-{can('billing.write') && <Button>Nouvelle facture</Button>}
+{can('billing.write') && <Button>New invoice</Button>}
 ```
 
 ---
 
-## Communication avec l’API
+## API Communication
 
-Tous les appels passent par le client centralisé `src/services/apiClient.js` :
+All calls go through the centralized client `src/services/apiClient.js`:
 
-- **Cookies** : requêtes envoyées avec `credentials: 'include'` (aucun jeton stocké dans `localStorage`)
-- **Rafraîchissement automatique** : sur une réponse `401`, un unique appel à `/api/users/refreshToken` est partagé entre les requêtes concurrentes, puis la requête initiale est rejouée
-- **Messages d’erreur** : les codes HTTP sont traduits en messages lisibles en français
-- **Services par ressource** : `productService`, `clientService`, `invoiceService`, `exportService`, etc.
+- **Cookies**: requests are sent with `credentials: 'include'` (no token stored in `localStorage`)
+- **Automatic refresh**: on a `401` response, a single call to `/api/users/refreshToken` is shared across concurrent requests, then the original request is replayed
+- **Error messages**: HTTP status codes are mapped to user-friendly messages
+- **One service per resource**: `productService`, `clientService`, `invoiceService`, `exportService`, etc.
 
-Les montants fiscaux (TVA, totaux, timbre) sont **calculés et stockés par le backend**. Le module `src/lib/fiscal.js` sert uniquement à l’affichage (formatage en dinars, ventilation de TVA, validation du matricule fiscal).
+Tax amounts (VAT, totals, fiscal stamp) are **calculated and stored by the backend**. The `src/lib/fiscal.js` module is used for display only (dinar formatting, VAT breakdown, tax ID validation).
 
 ---
 
-## Déploiement avec Docker
+## Docker Deployment
 
-Le `Dockerfile` construit l’application avec Node, puis la sert avec Nginx.
+The `Dockerfile` builds the app with Node, then serves it with Nginx.
 
 ```bash
-# Construire l'image
+# Build the image
 docker build -t fluxio-frontend .
 
-# Lancer le conteneur
+# Run the container
 docker run -d -p 8080:80 --name fluxio-frontend fluxio-frontend
 ```
 
-L’application est alors disponible sur **http://localhost:8080**.
+The app is then available at **http://localhost:8080**.
 
-> `VITE_API_URL` est intégrée au moment du build. Pour cibler une autre API, fournissez un fichier `.env` adapté (ou exportez la variable) **avant** `npm run build` dans votre pipeline.
+> `VITE_API_URL` is baked in at build time. To target a different API, provide a suitable `.env` file (or export the variable) **before** `npm run build` in your pipeline.
 
-La configuration `nginx.conf` :
+The `nginx.conf` configuration:
 
-- renvoie `index.html` pour toute route inconnue (fallback SPA) ;
-- masque la version de Nginx (`server_tokens off`) ;
-- ajoute les en-têtes de sécurité décrits ci-dessous.
-
----
-
-## Sécurité
-
-| Mesure                                  | Détail                                                  |
-| --------------------------------------- | ------------------------------------------------------- |
-| Authentification par cookie             | Aucun jeton accessible depuis le JavaScript applicatif  |
-| `X-Frame-Options: DENY` + `frame-ancestors 'none'` | Protection contre le clickjacking            |
-| `X-Content-Type-Options: nosniff`       | Empêche l’interprétation erronée des types MIME         |
-| `Referrer-Policy`                       | `strict-origin-when-cross-origin`                       |
-| `Permissions-Policy`                    | Caméra, micro et géolocalisation désactivés             |
-| Content-Security-Policy                 | `object-src 'none'`, `base-uri 'self'`, `form-action 'self'` |
-| Exports CSV                             | Neutralisation des formules (`=`, `+`, `-`, `@`…)       |
-| Secrets                                 | `.env` exclus de Git et de l’image Docker               |
-
-Pour signaler une vulnérabilité, contactez directement le mainteneur plutôt que d’ouvrir une issue publique.
+- serves `index.html` for any unknown route (SPA fallback);
+- hides the Nginx version (`server_tokens off`);
+- adds the security headers described below.
 
 ---
 
-## Conventions de code
+## Security
 
-- **Formatage** : Prettier (`.prettierrc`) avec tri automatique des classes Tailwind ; lancez `npm run format` avant chaque commit.
-- **Lint** : Oxlint (`.oxlintrc.json`) ; `npm run lint` doit passer sans erreur.
-- **Imports** : utilisez l’alias `@/` plutôt que des chemins relatifs profonds.
-- **Composants** : un composant par fichier, nommé en `PascalCase` ; hooks en `use-kebab-case.js` ou `useCamelCase.js`.
-- **Commits** : format [Conventional Commits](https://www.conventionalcommits.org/fr/) — `feat(invoices): …`, `fix(stock): …`, `chore(deps): …`.
+| Measure                                             | Details                                                       |
+| --------------------------------------------------- | ------------------------------------------------------------- |
+| Cookie-based authentication                         | No token accessible from application JavaScript               |
+| `X-Frame-Options: DENY` + `frame-ancestors 'none'`  | Clickjacking protection                                       |
+| `X-Content-Type-Options: nosniff`                   | Prevents MIME type sniffing                                   |
+| `Referrer-Policy`                                   | `strict-origin-when-cross-origin`                             |
+| `Permissions-Policy`                                | Camera, microphone and geolocation disabled                   |
+| Content-Security-Policy                             | `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`  |
+| CSV exports                                         | Formula neutralization (`=`, `+`, `-`, `@`…)                  |
+| Secrets                                             | `.env` excluded from Git and from the Docker image            |
 
-Des guides internes complémentaires (architecture, routage, accessibilité, performance, validation…) se trouvent dans le dossier `skills/`.
-
----
-
-## Principes d’interface
-
-- Chaque page s’appuie sur des composants réutilisables et des layouts responsives.
-- La palette utilise des tons bleu pétrole, cyan et émeraude ; le violet n’est pas utilisé.
-- Les informations critiques de stock doivent être lisibles, accessibles et visibles en priorité.
-- Les états de chargement, d’erreur et de liste vide sont toujours gérés (`Skeleton`, `ErrorBoundary`, `EmptyState`).
+To report a vulnerability, please contact the maintainer directly rather than opening a public issue.
 
 ---
 
-## Contribuer
+## Code Conventions
 
-1. Créez une branche depuis `main` : `git checkout -b feat/ma-fonctionnalite`
-2. Développez, puis vérifiez : `npm run lint && npm run format:check && npm run build`
-3. Commitez en suivant les Conventional Commits
-4. Ouvrez une Pull Request décrivant le changement et, si pertinent, des captures d’écran
+- **Formatting**: Prettier (`.prettierrc`) with automatic Tailwind class sorting; run `npm run format` before each commit.
+- **Linting**: Oxlint (`.oxlintrc.json`); `npm run lint` must pass without errors.
+- **Imports**: use the `@/` alias instead of deep relative paths.
+- **Components**: one component per file, named in `PascalCase`; hooks as `use-kebab-case.js` or `useCamelCase.js`.
+- **Commits**: [Conventional Commits](https://www.conventionalcommits.org/) format — `feat(invoices): …`, `fix(stock): …`, `chore(deps): …`.
+
+Additional internal guides (architecture, routing, accessibility, performance, validation…) are available in the `skills/` folder.
+
+---
+
+## UI Principles
+
+- Every page is built from reusable components and responsive layouts.
+- The palette uses petrol blue, cyan and emerald tones; purple is not used.
+- Critical stock information must be readable, accessible and given visual priority.
+- Loading, error and empty states are always handled (`Skeleton`, `ErrorBoundary`, `EmptyState`).
+
+---
+
+## Contributing
+
+1. Create a branch from `main`: `git checkout -b feat/my-feature`
+2. Develop, then verify: `npm run lint && npm run format:check && npm run build`
+3. Commit following Conventional Commits
+4. Open a Pull Request describing the change and, where relevant, include screenshots
 
 ---
 
 <div align="center">
 
-Fait avec soin pour les PME · **Fluxio**
+Built with care for small businesses · **Fluxio**
 
 </div>
