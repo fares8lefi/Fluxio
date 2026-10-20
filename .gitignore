@@ -24,3 +24,7 @@ dist-ssr
 *.sw?
 skills/
 node_modules/
+# Environment files
+.env
+.env.*
+!.env.example
