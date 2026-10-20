@@ -10,7 +10,9 @@ const STATUS_LABELS = {
 
 const money = (v) => (Number(v) || 0).toFixed(3).replace('.', ',');
 const cell = (v) => {
-  const s = String(v ?? '');
+  let s = String(v ?? '');
+  // Neutralise les formules Excel (=, +, -, @…) injectées via un nom de client
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
   return /[;"\n]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s;
 };
 
