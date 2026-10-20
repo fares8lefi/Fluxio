@@ -6,6 +6,7 @@ import App from './App.jsx';
 import { AuthProvider } from './contexts/AuthContext.jsx';
 import { ToastProvider } from './components/ui/Toast.jsx';
 import { ConfirmProvider } from './components/ui/ConfirmDialog.jsx';
+import { ErrorBoundary } from './components/ui/ErrorBoundary.jsx';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -14,7 +15,10 @@ createRoot(document.getElementById('root')).render(
       <ToastProvider>
         <ConfirmProvider>
           <AuthProvider>
-            <App />
+            {/* Last resort: a crash outside the dashboard still gets an error page */}
+            <ErrorBoundary fullScreen>
+              <App />
+            </ErrorBoundary>
           </AuthProvider>
         </ConfirmProvider>
       </ToastProvider>

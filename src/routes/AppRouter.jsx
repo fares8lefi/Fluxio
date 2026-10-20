@@ -13,9 +13,7 @@ export default function AppRouter() {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
-    return (
-      <PageLoader fullScreen />
-    );
+    return <PageLoader fullScreen label="Vérification de votre session…" />;
   }
 
   // Politique de confidentialité : publique, connecté ou non

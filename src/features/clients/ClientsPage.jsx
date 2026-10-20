@@ -166,7 +166,7 @@ export function ClientsPage() {
                         className="grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40"
                       >
                         {deleting === c.id ? (
-                          <Spinner size="xs" className="border-t-rose-500" label="Suppression…" />
+                          <Spinner size="xs" tone="danger" label="Suppression…" />
                         ) : (
                           <Trash2 className="size-3.5" />
                         )}

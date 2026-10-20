@@ -170,6 +170,38 @@
   .animate-spin { animation-duration: 2s; }
 }
 
+/* Spinner (Spinner.jsx): the logo's bars drain to their alert level, turn
+   amber for a beat, then restock. Staggered by --i so the stock "flows". */
+.stock-spinner { --bar: #0f5a63; --low: #e8a33d; }
+.stock-spinner[data-tone='danger'] { --bar: #d2453b; --low: #ee9f93; }
+.stock-spinner[data-tone='current'] { --bar: currentColor; --low: currentColor; }
+
+.stock-spinner rect {
+  fill: var(--bar);
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: stock-level 1.3s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  animation-delay: calc(var(--i) * 0.18s - 1.3s);
+}
+
+@keyframes stock-level {
+  0%, 100% { transform: scaleY(1); fill: var(--bar); }
+  /* fill switches in a hair, so petrol never blends into amber */
+  43.9% { fill: var(--bar); }
+  44%, 58% { fill: var(--low); }
+  50% { transform: scaleY(0.2); }
+  58.1% { fill: var(--bar); }
+}
+
+@keyframes stock-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stock-spinner rect { animation-name: stock-pulse; animation-duration: 1.8s; }
+}
+
 /* ── Impression des documents (voir PrintPreviewModal) ───────────────────── */
 .print-only { display: none; }
 
