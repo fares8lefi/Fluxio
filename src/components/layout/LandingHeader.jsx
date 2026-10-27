@@ -33,6 +33,7 @@ export function LandingHeader() {
           type="button"
           aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}
           aria-expanded={open}
+          aria-controls="landing-mobile-menu"
           onClick={() => setOpen(!open)}
         >
           {open ? <X className="size-5" /> : <Menu className="size-5" />}
@@ -40,7 +41,12 @@ export function LandingHeader() {
       </div>
 
       {open && (
-        <nav className="absolute inset-x-5 top-18 grid gap-1 rounded-xl border bg-white p-3 shadow-xl md:hidden">
+        // text-slate-900: the hero sets text-white, which would otherwise make the links invisible
+        <nav
+          id="landing-mobile-menu"
+          aria-label="Menu"
+          className="absolute inset-x-5 top-18 grid gap-1 rounded-xl border bg-white p-3 text-slate-900 shadow-xl md:hidden"
+        >
           {NAV_MENU.map(([label, id]) => (
             <a
               className="rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-slate-50"
