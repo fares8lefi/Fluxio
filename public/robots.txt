@@ -1,3 +1,4 @@
 User-agent: *
 Allow: /
+Disallow: /dashboard
 Sitemap: https://www.fluxio.tn/sitemap.xml

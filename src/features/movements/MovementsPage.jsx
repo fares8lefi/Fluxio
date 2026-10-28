@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { navigate } from '@/lib/router';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   ArrowLeftRight,
@@ -143,8 +144,8 @@ const TAB_KEYS = [null, 'IN', 'OUT', 'RETURN_SUPPLIER', 'RETURN_CLIENT'];
 /* ─────────────────────── MovementTabs ─────────────────────────── */
 
 function MovementTabs({ currentType }) {
-  const navigate = (hash) => {
-    window.location.hash = `#dashboard/${hash}`;
+  const goTo = (hash) => {
+    navigate(`/dashboard/${hash}`);
   };
 
   return (
@@ -156,7 +157,7 @@ function MovementTabs({ currentType }) {
           <button
             key={String(key)}
             type="button"
-            onClick={() => navigate(cfg.hash)}
+            onClick={() => goTo(cfg.hash)}
             className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
               isActive
                 ? 'bg-cyan-700 text-white shadow-sm'
@@ -744,7 +745,7 @@ function MovementTypeView({ typeFilter }) {
         onClose={() => setInvoiceMovementId(null)}
         onSuccess={() => {
           setInvoiceMovementId(null);
-          window.location.hash = '#dashboard/invoices';
+          navigate('/dashboard/invoices');
         }}
       />
     </div>

@@ -23,11 +23,14 @@ const SALES = [
  */
 export function StockTag() {
   const reduceMotion = useReducedMotion();
-  const [step, setStep] = useState(reduceMotion ? SALES.length : 0);
+  // Toujours 0 au premier rendu, comme le HTML prérendu (sinon erreur d'hydratation) ;
+  // avec mouvement réduit, on saute aussitôt à l'état final
+  const [step, setStep] = useState(0);
 
   useEffect(() => {
-    if (reduceMotion || step >= SALES.length) return;
-    const id = setTimeout(() => setStep((s) => s + 1), step === 0 ? 1100 : 850);
+    if (step >= SALES.length) return;
+    const delay = reduceMotion ? 0 : step === 0 ? 1100 : 850;
+    const id = setTimeout(() => setStep((s) => (reduceMotion ? SALES.length : s + 1)), delay);
     return () => clearTimeout(id);
   }, [step, reduceMotion]);
 

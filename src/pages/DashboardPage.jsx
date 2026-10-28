@@ -1,4 +1,4 @@
-import { useHashRoute } from '@/hooks/useHashRoute';
+import { navigate as navigateTo, usePathname } from '@/lib/router';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { ProductsPage } from '@/features/products/ProductsPage';
@@ -33,10 +33,10 @@ import { getDashboardSummary, getStockHealth } from '@/services/dashboardService
 import { getProducts } from '@/services/productService';
 import { getAllMouvment } from '@/services/mouvmentService';
 
-/** Extract sub-route from hash: '#dashboard/products' → 'products' */
+/** Extract sub-route from path: '/dashboard/products' → 'products' */
 function useSubRoute() {
-  const hash = useHashRoute();
-  const parts = hash.replace('#dashboard', '').replace(/^\//, '');
+  const path = usePathname();
+  const parts = path.replace('/dashboard', '').replace(/^\//, '');
   return parts; // '' | 'products' | 'categories' | 'suppliers' | ...
 }
 
@@ -335,7 +335,7 @@ function ReorderList({ products, loading, onReceive, onSeeAll, canWrite }) {
   );
 }
 
-/** Sub-router: renders the right page based on the hash sub-route */
+/** Sub-router: renders the right page based on the dashboard sub-path */
 function SubRouter({ sub, navigate }) {
   if (sub === 'products')                  return <ProductsPage />;
   if (sub === 'categories')                return <CategoriesPage />;
@@ -360,7 +360,7 @@ export default function DashboardPage() {
   const sub = useSubRoute();
 
   const navigate = (id) => {
-    window.location.hash = id ? `#dashboard/${id}` : '#dashboard';
+    navigateTo(id ? `/dashboard/${id}` : '/dashboard');
   };
 
   return (

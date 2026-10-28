@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { navigate } from '@/lib/router';
 import { SignupSidebar } from '@/components/auth/SignupSidebar';
 import { FormInput } from '@/components/auth/FormInput';
 import { Button } from '@/components/ui/button';
@@ -77,7 +78,7 @@ export default function ForgotPasswordPage() {
         <div className="w-full max-w-lg">
           <a
             className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-950 transition"
-            href="#login"
+            href="/login"
           >
             <ArrowLeft className="size-4" />
             Retour à la connexion
@@ -107,7 +108,7 @@ export default function ForgotPasswordPage() {
                   Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.
                 </p>
                 <Button
-                  onClick={() => { window.location.hash = '#login'; }}
+                  onClick={() => { navigate('/login'); }}
                   className="w-full h-11 bg-cyan-800 hover:bg-cyan-900 text-white"
                 >
                   Aller à la connexion
@@ -219,7 +220,7 @@ export default function ForgotPasswordPage() {
 
             <div className="mt-6 text-center text-sm text-slate-600">
               Vous vous souvenez de votre mot de passe ?{' '}
-              <a href="#login" className="font-semibold text-cyan-700 hover:underline">
+              <a href="/login" className="font-semibold text-cyan-700 hover:underline">
                 Se connecter
               </a>
             </div>

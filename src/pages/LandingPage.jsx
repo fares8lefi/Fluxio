@@ -22,7 +22,7 @@ export default function LandingPage() {
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Button size="lg" className="h-12 bg-amber-400 px-6 text-cyan-950 hover:bg-amber-300" asChild>
-                <a href="#signup">Créer un compte gratuit</a>
+                <a href="/signup">Créer un compte gratuit</a>
               </Button>
               <Button
                 size="lg"
@@ -89,7 +89,7 @@ export default function LandingPage() {
             </div>
             <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
               <Button size="lg" className="h-12 bg-amber-400 px-6 text-cyan-950 hover:bg-amber-300" asChild>
-                <a href="#signup">Créer un compte gratuit</a>
+                <a href="/signup">Créer un compte gratuit</a>
               </Button>
               <Button
                 size="lg"
@@ -97,7 +97,7 @@ export default function LandingPage() {
                 className="h-12 px-6 text-white hover:bg-white/10 hover:text-white"
                 asChild
               >
-                <a href="#login">J'ai déjà un compte</a>
+                <a href="/login">J'ai déjà un compte</a>
               </Button>
             </div>
           </div>
@@ -112,9 +112,9 @@ export default function LandingPage() {
           <nav aria-label="Pied de page" className="flex flex-wrap justify-center gap-x-8 gap-y-2 text-sm text-slate-500">
             <a href="#produit" className="hover:text-slate-900">Fonctionnement</a>
             <a href="#securite" className="hover:text-slate-900">Sécurité</a>
-            <a href="#signup" className="hover:text-slate-900">Créer un compte</a>
-            <a href="#login" className="hover:text-slate-900">Se connecter</a>
-            <a href="#confidentialite" className="hover:text-slate-900">Politique de confidentialité</a>
+            <a href="/signup" className="hover:text-slate-900">Créer un compte</a>
+            <a href="/login" className="hover:text-slate-900">Se connecter</a>
+            <a href="/confidentialite" className="hover:text-slate-900">Politique de confidentialité</a>
           </nav>
           <p className="text-sm text-slate-400">© 2026 Fluxio, projet éducatif</p>
         </div>

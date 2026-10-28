@@ -5,7 +5,7 @@ import { StockTag } from '@/components/landing/StockTag';
 export function SignupSidebar() {
   return (
     <aside className="hidden bg-cyan-900 p-12 text-white lg:flex lg:flex-col lg:justify-between">
-      <a href="#accueil" aria-label="Fluxio, accueil" className="self-start">
+      <a href="/" aria-label="Fluxio, accueil" className="self-start">
         <Logo ink />
       </a>
       <div className="flex flex-col gap-10">

@@ -42,7 +42,7 @@ export function StepLogin({ email, password, onChange, onSubmit, loading }) {
       </div>
       <div className="-mt-2 flex justify-end">
         <a
-          href="#forgot-password"
+          href="/forgot-password"
           className="text-xs font-medium text-cyan-700 hover:text-cyan-800 hover:underline"
         >
           Mot de passe oublié ?

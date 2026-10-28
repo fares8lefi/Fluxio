@@ -94,7 +94,7 @@ export default function PrivacyPage() {
     };
   }, []);
 
-  // Navigation par hash = routeur : un lien « #donnees » quitterait la page, on fait défiler à la place
+  // Défilement doux vers la section, sans ajouter d'ancre dans l'URL
   const goTo = (id) => (e) => {
     e.preventDefault();
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -105,11 +105,11 @@ export default function PrivacyPage() {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <header className="bg-cyan-900 text-white">
         <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-5 lg:px-8">
-          <a href="#accueil" aria-label="Fluxio, accueil" className="rounded-md">
+          <a href="/" aria-label="Fluxio, accueil" className="rounded-md">
             <Logo ink />
           </a>
           <a
-            href="#accueil"
+            href="/"
             className="inline-flex items-center gap-2 rounded-md text-sm font-medium text-cyan-100/80 hover:text-white"
           >
             <ArrowLeft className="size-4" aria-hidden="true" />
@@ -277,7 +277,7 @@ export default function PrivacyPage() {
 
       <footer className="border-t bg-white">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-8 text-sm text-slate-400 sm:flex-row lg:px-8">
-          <a href="#accueil" aria-label="Fluxio, accueil">
+          <a href="/" aria-label="Fluxio, accueil">
             <Logo small />
           </a>
           <p>© {YEAR} Fluxio, projet éducatif</p>

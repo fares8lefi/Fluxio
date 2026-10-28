@@ -6,6 +6,7 @@ const HTTP_MESSAGES = {
   409: 'Un compte avec ces informations existe déjà.',
   400: 'Les informations saisies sont invalides.',
   404: 'Ressource introuvable.',
+  410: 'Ce lien a expiré ou a déjà été utilisé.',
   500: 'Une erreur est survenue sur le serveur.',
 };
 

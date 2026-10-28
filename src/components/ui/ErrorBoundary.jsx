@@ -87,7 +87,7 @@ export function ErrorState({ error, fullScreen = false, onRetry }) {
           </Button>
           {fullScreen && (
             <Button asChild variant="outline" className="rounded-xl">
-              <a href="#dashboard">Aller au tableau de bord</a>
+              <a href="/dashboard">Aller au tableau de bord</a>
             </Button>
           )}
         </div>
@@ -110,7 +110,7 @@ export function ErrorState({ error, fullScreen = false, onRetry }) {
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 px-4 py-6 sm:px-10">
-      <a href="#" aria-label="Accueil Fluxio" className="w-fit">
+      <a href="/" aria-label="Accueil Fluxio" className="w-fit">
         <Logo small />
       </a>
       <main className="mx-auto flex w-full max-w-3xl flex-1 items-center">{body}</main>
@@ -134,11 +134,11 @@ export class ErrorBoundary extends Component {
   componentDidCatch(error, info) {
     console.error('Page crashed:', error, info.componentStack);
     // The root boundary has no route key: leaving the broken route clears it
-    if (this.props.fullScreen) window.addEventListener('hashchange', this.reset, { once: true });
+    if (this.props.fullScreen) window.addEventListener('popstate', this.reset, { once: true });
   }
 
   componentWillUnmount() {
-    window.removeEventListener('hashchange', this.reset);
+    window.removeEventListener('popstate', this.reset);
   }
 
   reset = () => this.setState({ error: null });

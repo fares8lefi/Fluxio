@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { navigate } from '@/lib/router';
 import { useAuth } from '@/contexts/AuthContext';
 import { SignupSidebar } from '@/components/auth/SignupSidebar';
 import { StepLogin } from '@/components/auth/StepLogin';
@@ -10,7 +11,11 @@ import { StepLogin } from '@/components/auth/StepLogin';
  */
 export default function LoginPage() {
   const { login } = useAuth();
-  const [credentials, setCredentials] = useState({ email: '', password: '' });
+  // E-mail prérempli après l'acceptation d'une invitation (history.state, pas dans l'URL)
+  const [credentials, setCredentials] = useState(() => ({
+    email: window.history.state?.email ?? '',
+    password: '',
+  }));
   const [message, setMessage] = useState({ type: '', text: '' });
   const [loading, setLoading] = useState(false);
 
@@ -24,7 +29,7 @@ export default function LoginPage() {
     setMessage({ type: '', text: '' });
     try {
       await login(credentials.email, credentials.password);
-      window.location.hash = '#dashboard';
+      navigate('/dashboard');
     } catch (error) {
       setMessage({
         type: 'error',
@@ -43,7 +48,7 @@ export default function LoginPage() {
         <div className="w-full max-w-lg">
           <a
             className="text-sm font-medium text-slate-600 hover:text-slate-950"
-            href="#accueil"
+            href="/"
           >
             ← Retour à l'accueil
           </a>
@@ -71,7 +76,7 @@ export default function LoginPage() {
 
             <div className="mt-6 text-center text-sm text-slate-600">
               Pas encore de compte ?{' '}
-              <a href="#signup" className="font-semibold text-cyan-700 hover:underline">
+              <a href="/signup" className="font-semibold text-cyan-700 hover:underline">
                 S'inscrire
               </a>
             </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { navigate } from '@/lib/router';
 
 import { register, verifyAccount } from '@/services/authService';
 import { SignupProgress } from '@/components/auth/SignupProgress';
@@ -67,7 +68,7 @@ export default function SignupPage() {
         text: 'Votre compte est vérifié. Redirection vers la connexion...',
       });
       setTimeout(() => {
-        window.location.hash = '#login';
+        navigate('/login');
       }, 3000);
     } catch (error) {
       setMessage({
@@ -87,7 +88,7 @@ export default function SignupPage() {
         <div className="w-full max-w-lg">
           <a
             className="text-sm font-medium text-slate-600 hover:text-slate-950"
-            href="#accueil"
+            href="/"
           >
             ← Retour à l'accueil
           </a>

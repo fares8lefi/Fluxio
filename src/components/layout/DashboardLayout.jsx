@@ -31,7 +31,7 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 
 /**
  * Sidebar nav item definition
- * id        — hash sub-route segment (e.g. 'products')
+ * id        — dashboard sub-path segment (e.g. 'products')
  * label     — display label
  * icon      — LucideIcon
  * children  — optional nested items
@@ -376,7 +376,7 @@ export function DashboardLayout({ children, currentSub, onNavigate }) {
       <a
         href="#main-content"
         onClick={(e) => {
-          e.preventDefault(); // keep the hash router untouched
+          e.preventDefault(); // keep the URL untouched
           document.getElementById('main-content')?.focus();
         }}
         className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:shadow-lg"

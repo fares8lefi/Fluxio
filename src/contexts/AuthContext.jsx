@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import { navigate } from '@/lib/router';
 import { getMe, login as apiLogin, logout as apiLogout } from '@/services/authService';
 import { can as canDo } from '@/lib/permissions';
 
@@ -32,7 +33,7 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     await apiLogout();
     setUser(null);
-    window.location.hash = '#login';
+    navigate('/login');
   };
 
   return (
